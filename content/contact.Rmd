@@ -1,0 +1,8 @@
+---
+date: "2020-02-14T21:48:51-07:00"
+title: Contact Page
+---
+
+contact me on Twitter: @chrisjcote["https://www.twitter.com/chrisjcote]
+
+The theme was forked from [@jrutheiser/hugo-lithium-theme](https://github.com/jrutheiser/hugo-lithium-theme) and modified by [Yihui Xie](https://github.com/yihui/hugo-lithium).

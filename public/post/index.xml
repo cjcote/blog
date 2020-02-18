@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Chris Cote&#39;s Blog</title>
+    <link>/post/</link>
+    <description>Recent content in Posts on Chris Cote&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 21 Feb 2020 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Whodunnit? Network Analysis of British Detective Series</title>
+      <link>/2020/02/21/whodunnit-network-analysis-of-british-detective-series/</link>
+      <pubDate>Fri, 21 Feb 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/2020/02/21/whodunnit-network-analysis-of-british-detective-series/</guid>
+      <description>##British Murder Mysteries! Watching British murder mysteries and detective shows are how I spend most evenings</description>
+    </item>
+    
+    <item>
+      <title>This American R</title>
+      <link>/2020/02/14/this-american-r/</link>
+      <pubDate>Fri, 14 Feb 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/2020/02/14/this-american-r/</guid>
+      <description>library(tidyverse) tal &amp;lt;- read_csv(&amp;quot;~/Documents/HKS/rtutorial/data/this_american_life/tal_complete.csv&amp;quot;) tal1 &amp;lt;- tal %&amp;gt;% slice(1) tal1 %&amp;gt;% select(content) %&amp;gt;% mutate(content = str_replace_all(content, &amp;quot;\\n|\\\n&amp;quot;, &amp;quot; &amp;quot;) %&amp;gt;% str_trim(.,&amp;quot;both&amp;quot;)) ## # A tibble: 1 x 1 ## content ## &amp;lt;chr&amp;gt; ## 1 &amp;quot;1: New Beginnings Transcript Originally aired 11.17.1995 Note: This Americ… tal_tidy &amp;lt;- tal %&amp;gt;% slice(1:100) %&amp;gt;% tidytext::unnest_tokens(&amp;quot;word&amp;quot;, content) %&amp;gt;% mutate(title = str_replace_all(title, &amp;quot;\\\n&amp;quot;, &amp;quot; &amp;quot;) %&amp;gt;% str_replace(., &amp;quot;Transcript.+Originally aired.+&amp;quot;, &amp;quot;&amp;quot;)) %&amp;gt;% anti_join(tidytext::stop_words) tal_tf_idf &amp;lt;- tal_tidy %&amp;gt;% select(title, word) %&amp;gt;% group_by(title) %&amp;gt;% count(word, sort = TRUE) %&amp;gt;% ungroup() %&amp;gt;% tidytext::bind_tf_idf(word, title, n) tal_tf_idf %&amp;gt;% group_by(title) %&amp;gt;% arrange(-tf_idf) %&amp;gt;% slice(1:10) %&amp;gt;% summarise(top_words = str_c(word, collapse = &amp;quot;, &amp;quot;)) %&amp;gt;% ungroup() %&amp;gt;% left_join(tal_tidy %&amp;gt;% distinct(title, air_date, show_number)) %&amp;gt;% arrange(air_date) %&amp;gt;% mutate(title_words = str_c(title, top_words, sep = &amp;quot;: &amp;quot;)) %&amp;gt;% ggplot() + geom_text(aes(-show_number, 0, label = title_words), size = 5) + # scale_x_date(date_labels = &amp;quot;%y-%m-%d&amp;quot;) + theme(axis.</description>
+    </item>
+    
+    <item>
+      <title>Exploring Euro Ship Data</title>
+      <link>/2020/02/12/exploring-euro-ship-data/</link>
+      <pubDate>Wed, 12 Feb 2020 21:48:51 -0700</pubDate>
+      
+      <guid>/2020/02/12/exploring-euro-ship-data/</guid>
+      <description>##Add text here
+library(tidyverse) library(readxl) library(ggridges) library(patchwork) z &amp;lt;- readxl::read_excel(&amp;quot;~/Downloads/2018-v151-08022020-EU MRV Publication of information.xlsx&amp;quot;, skip = 2) ##Add text here
+z_t &amp;lt;- z %&amp;gt;% set_names(., names(.) %&amp;gt;% str_to_lower() %&amp;gt;% str_replace_all(., &amp;quot; &amp;quot;, &amp;quot;_&amp;quot;) %&amp;gt;% str_replace_all(., &amp;quot;\\[|\\]|\\(|\\)|&amp;quot;, &amp;quot;&amp;quot;) %&amp;gt;% str_replace_all(., &amp;quot;\\/&amp;quot;, &amp;quot;per&amp;quot;)) %&amp;gt;% select(imo_number, ship_type, annual_total_time_spent_at_sea_hours, fuel_consumptions_assigned_to_on_laden_m_tonnes, annual_average_fuel_consumption_per_distance_kg_per_n_mile, total_fuel_consumption_m_tonnes, everything()) %&amp;gt;% mutate_at(vars(-ship_type), as.numeric) z_t %&amp;gt;% group_by(ship_type) %&amp;gt;% summarise(total_fuel_consumption_m_tonnes = sum(total_fuel_consumption_m_tonnes/365/1000*6.6, na.rm = TRUE)) %&amp;gt;% ggplot() + geom_col(aes(fct_reorder(ship_type, total_fuel_consumption_m_tonnes), total_fuel_consumption_m_tonnes)) + coord_flip() ##Add text here</description>
+    </item>
+    
+  </channel>
+</rss>

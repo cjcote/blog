@@ -1,0 +1,82 @@
+---
+title: This American R
+author: Chris Cote
+date: '2020-02-14'
+categories:
+  - Text
+slug: this-american-r
+---
+
+
+
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre class="r"><code>tal &lt;- read_csv(&quot;~/Documents/HKS/rtutorial/data/this_american_life/tal_complete.csv&quot;)</code></pre>
+<pre class="r"><code>tal1 &lt;- tal %&gt;% slice(1)</code></pre>
+<pre class="r"><code>tal1 %&gt;% 
+  select(content) %&gt;% 
+  mutate(content = str_replace_all(content, &quot;\\n|\\\n&quot;, &quot; &quot;) %&gt;% 
+           str_trim(.,&quot;both&quot;))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   content                                                                       
+##   &lt;chr&gt;                                                                         
+## 1 &quot;1:  New Beginnings Transcript  Originally aired 11.17.1995 Note: This Americ…</code></pre>
+<pre class="r"><code>tal_tidy &lt;- tal %&gt;% slice(1:100) %&gt;%  
+  tidytext::unnest_tokens(&quot;word&quot;, content) %&gt;% 
+  mutate(title = str_replace_all(title, &quot;\\\n&quot;, &quot; &quot;) %&gt;% 
+           str_replace(., &quot;Transcript.+Originally aired.+&quot;, &quot;&quot;)) %&gt;% 
+  anti_join(tidytext::stop_words)</code></pre>
+<pre class="r"><code>tal_tf_idf &lt;- tal_tidy  %&gt;% 
+  select(title, word) %&gt;% 
+  group_by(title) %&gt;% 
+  count(word, sort = TRUE) %&gt;% 
+  ungroup() %&gt;% 
+  tidytext::bind_tf_idf(word, title, n)</code></pre>
+<pre class="r"><code>tal_tf_idf %&gt;% 
+  group_by(title) %&gt;% 
+  arrange(-tf_idf) %&gt;% 
+  slice(1:10) %&gt;% 
+  summarise(top_words = str_c(word, collapse = &quot;, &quot;)) %&gt;% 
+  ungroup() %&gt;% 
+  left_join(tal_tidy %&gt;% 
+  distinct(title, air_date, show_number)) %&gt;% 
+  arrange(air_date) %&gt;% 
+  mutate(title_words = str_c(title, top_words, sep = &quot;: &quot;)) %&gt;% 
+  ggplot() + 
+  geom_text(aes(-show_number, 0, label = title_words), size = 5) + 
+  # scale_x_date(date_labels = &quot;%y-%m-%d&quot;) +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.background = element_blank(),
+        plot.title = element_text(hjust = 0.5)) +
+  coord_flip() +
+  labs(x = NULL, y = NULL, title = &quot;Episode Title and Unique Words&quot;)+
+  NULL</code></pre>
+<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre class="r"><code>tt &lt;- tal_tf_idf %&gt;% 
+  arrange(-tf_idf) %&gt;% 
+  group_by(word) %&gt;% 
+  mutate(total_n = sum(n)) %&gt;% 
+  ungroup()
+
+tt %&gt;% 
+  group_by(word) %&gt;% 
+  mutate(total_shows = n()) %&gt;% 
+  ungroup() %&gt;% 
+  filter(tf_idf &gt; 0.035,
+         total_shows &gt; 1) %&gt;% 
+  ggplot(aes(tf_idf, total_n)) + 
+  geom_point(aes(size = total_shows, alpha = tf_idf), shape = 21) +
+  ggrepel::geom_text_repel(aes(label = word), size = 3) +
+  scale_y_log10()</code></pre>
+<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<pre class="r"><code>tal %&gt;% filter(str_detect(content, regex(&quot;sedaris&quot;,ignore_case = TRUE))) %&gt;%   tidytext::unnest_tokens(&quot;word&quot;, content) %&gt;% 
+  filter(word == &quot;sedaris&quot;) %&gt;% 
+  group_by(show_number, air_date) %&gt;% 
+  count() %&gt;% 
+  ungroup() %&gt;% 
+  arrange(air_date) %&gt;% 
+  mutate(time_between = as.numeric(air_date - lag(air_date))) %&gt;% 
+  ggplot(aes(show_number, time_between)) +
+  geom_point() +
+  geom_line()</code></pre>
+<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>

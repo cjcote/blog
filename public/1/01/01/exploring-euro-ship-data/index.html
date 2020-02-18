@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.64.0" />
+
+
+<title>Exploring Euro Ship Data - cote_energy</title>
+<meta property="og:title" content="Exploring Euro Ship Data - cote_energy">
+
+
+  <link href='/favicon.ico' rel='icon' type='image/x-icon'/>
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About</a></li>
+    
+    <li><a href="https://github.com/cjcote/">GitHub</a></li>
+    
+    <li><a href="https://twitter.com/cote_energy">Twitter</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">6 min read</span>
+    
+
+    <h1 class="article-title">Exploring Euro Ship Data</h1>
+
+    
+    <span class="article-date">0001-01-01</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>##Add text here</p>
+<pre class="r"><code>library(tidyverse)
+## Warning: package &#39;tidyverse&#39; was built under R version 3.5.2
+## ── Attaching packages ────────────────────────────────────── tidyverse 1.3.0 ──
+## ✓ ggplot2 3.2.1     ✓ purrr   0.3.3
+## ✓ tibble  2.1.3     ✓ dplyr   0.8.4
+## ✓ tidyr   1.0.2     ✓ stringr 1.4.0
+## ✓ readr   1.3.1     ✓ forcats 0.4.0
+## Warning: package &#39;ggplot2&#39; was built under R version 3.5.2
+## Warning: package &#39;tibble&#39; was built under R version 3.5.2
+## Warning: package &#39;tidyr&#39; was built under R version 3.5.2
+## Warning: package &#39;purrr&#39; was built under R version 3.5.2
+## Warning: package &#39;dplyr&#39; was built under R version 3.5.2
+## Warning: package &#39;stringr&#39; was built under R version 3.5.2
+## Warning: package &#39;forcats&#39; was built under R version 3.5.2
+## ── Conflicts ───────────────────────────────────────── tidyverse_conflicts() ──
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+library(readxl)
+## Warning: package &#39;readxl&#39; was built under R version 3.5.2
+library(ggridges)
+## Warning: package &#39;ggridges&#39; was built under R version 3.5.2
+library(patchwork)
+## Warning: package &#39;patchwork&#39; was built under R version 3.5.2
+
+z &lt;- readxl::read_excel(&quot;~/Downloads/2018-v151-08022020-EU MRV Publication of information.xlsx&quot;, skip = 2)
+## New names:
+## * `` -&gt; ...48</code></pre>
+<p>##Add text here</p>
+<pre class="r"><code>z_t &lt;- z %&gt;% 
+  set_names(., names(.) %&gt;% str_to_lower() %&gt;% str_replace_all(., &quot; &quot;, &quot;_&quot;) %&gt;% 
+              str_replace_all(., &quot;\\[|\\]|\\(|\\)|&quot;, &quot;&quot;) %&gt;% 
+              str_replace_all(., &quot;\\/&quot;, &quot;per&quot;)) %&gt;% 
+  select(imo_number, ship_type, annual_total_time_spent_at_sea_hours, 
+         fuel_consumptions_assigned_to_on_laden_m_tonnes,
+         annual_average_fuel_consumption_per_distance_kg_per_n_mile,
+         total_fuel_consumption_m_tonnes, everything()) %&gt;% 
+  mutate_at(vars(-ship_type), as.numeric)
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion
+
+## Warning: NAs introduced by coercion</code></pre>
+<pre class="r"><code>z_t %&gt;% 
+  group_by(ship_type) %&gt;% 
+  summarise(total_fuel_consumption_m_tonnes = sum(total_fuel_consumption_m_tonnes/365/1000*6.6, na.rm = TRUE)) %&gt;% 
+  ggplot() + geom_col(aes(fct_reorder(ship_type, total_fuel_consumption_m_tonnes), total_fuel_consumption_m_tonnes)) +
+  coord_flip()</code></pre>
+<p><img src="/post/2020-02-14_euro_ship_exploration_files/figure-html/total%20fuel%20consumption%20per%20ship%20type-1.png" width="672" /></p>
+<p>##Add text here</p>
+<pre class="r"><code>z_t %&gt;% 
+  group_by(ship_type) %&gt;% 
+  summarise(time = mean(annual_total_time_spent_at_sea_hours, na.rm = TRUE)) %&gt;% 
+  ggplot() + geom_col(aes(fct_reorder(ship_type, time), time)) +
+  coord_flip()</code></pre>
+<p><img src="/post/2020-02-14_euro_ship_exploration_files/figure-html/ime%20at%20sea%20per%20ship%20type-1.png" width="672" /></p>
+<p>##Add text here</p>
+<pre class="r"><code>z_t %&gt;% 
+  mutate(fuel_per_hour = total_fuel_consumption_m_tonnes/annual_total_time_spent_at_sea_hours * 24*6.6) %&gt;% 
+  group_by(ship_type) %&gt;% 
+  summarise(fuel_per_hour = mean(fuel_per_hour, na.rm = TRUE)) %&gt;% 
+  ggplot() + geom_col(aes(fct_reorder(ship_type, fuel_per_hour), fuel_per_hour)) +
+  coord_flip()</code></pre>
+<p><img src="/post/2020-02-14_euro_ship_exploration_files/figure-html/fuel%20per%20hour%20by%20ship%20type-1.png" width="672" /></p>
+<p>##Add text here</p>
+<pre class="r"><code>
+fuel_per_day_ridge_plot &lt;- z_t %&gt;% 
+  mutate(fuel_per_day = total_fuel_consumption_m_tonnes/annual_total_time_spent_at_sea_hours*24*6.6) %&gt;% 
+  filter(!is.na(fuel_per_day), !is.na(ship_type), 
+         fuel_per_day &gt; 0, !is.infinite(fuel_per_day)) %&gt;% 
+  group_by(ship_type) %&gt;% 
+  mutate(avg_fuel_per_day  = mean(fuel_per_day)) %&gt;% 
+  # ggplot() + geom_histogram(aes(x = fuel_per_day)) +
+  # facet_wrap(~ship_type)
+  ggplot() + 
+  geom_density_ridges_gradient(aes(x = fuel_per_day, y = fct_reorder(ship_type, avg_fuel_per_day), fill = stat(x)), 
+                               scale = 2, alpha = 0.4, rel_min_height = 0.01, color = &quot;white&quot;) +
+  theme_minimal() + 
+  scale_x_continuous(limits = c(0, 700)) +
+  scale_fill_viridis_c(option = &quot;C&quot;) +
+  theme(axis.title.x = element_text(hjust = 1),
+        axis.title.y = element_text(hjust = 1),
+        plot.title = element_text(hjust = 0.5, size = 10),
+        legend.position = &quot;none&quot;) +
+  labs(title = &quot;Fuel Used Per Day by Ship Type (000 b/d)&quot;,
+       x = &quot;Fuel per Day (000 b/d)&quot;, y = NULL)
+
+fuel_per_day_ridge_plot
+## Picking joint bandwidth of 27.9</code></pre>
+<p><img src="/post/2020-02-14_euro_ship_exploration_files/figure-html/fuel%20per%20day-1.png" width="672" /></p>
+<p>##Add text here</p>
+<pre class="r"><code>miles_per_hour_ridge_plot &lt;- z_t %&gt;% 
+  mutate(miles = total_fuel_consumption_m_tonnes/(annual_average_fuel_consumption_per_distance_kg_per_n_mile/1000)) %&gt;% 
+  mutate(miles_per_hour = miles/annual_total_time_spent_at_sea_hours) %&gt;% 
+  filter(miles_per_hour &gt; 0, !is.infinite(miles_per_hour)) %&gt;% 
+  select(imo_number, ship_type, miles, miles_per_hour, annual_total_time_spent_at_sea_hours) %&gt;%
+  ggplot() + geom_density_ridges_gradient(aes(x = miles_per_hour, y = fct_reorder(ship_type, miles_per_hour), fill = stat(x)), 
+                               scale = 2, alpha = 0.4, rel_min_height = 0.01, color = &quot;white&quot;) +
+  theme_minimal() + 
+  scale_x_continuous(limits = c(0, 25)) +
+  scale_fill_viridis_c(option = &quot;C&quot;) +
+  theme(axis.title.x = element_text(hjust = 1),
+        axis.title.y = element_text(hjust = 1),
+        plot.title = element_text(hjust = 0.5, size = 10),
+        legend.position = &quot;none&quot;) +
+  labs(title = &quot;Speed by Ship Type&quot;, x = &quot;Nautical Miles per Hour&quot;, y = NULL)
+
+miles_per_hour_ridge_plot
+## Picking joint bandwidth of 0.835</code></pre>
+<p><img src="/post/2020-02-14_euro_ship_exploration_files/figure-html/miles%20per%20hour%20ridge%20plot-1.png" width="672" /></p>
+<p>##Add text here</p>
+<pre class="r"><code>distance_per_fuel_plot &lt;- z_t %&gt;% 
+  mutate(nmile_per_bbl = 1/(annual_average_fuel_consumption_per_distance_kg_per_n_mile*6.6/1000)) %&gt;% 
+  # mutate(miles_per_hour = miles/annual_total_time_spent_at_sea_hours) %&gt;% 
+  filter(nmile_per_bbl &gt; 0, !is.infinite(nmile_per_bbl)) %&gt;% 
+  # select(imo_number, ship_type, miles, miles_per_hour, annual_total_time_spent_at_sea_hours) %&gt;%
+  ggplot() + geom_density_ridges_gradient(aes(x = nmile_per_bbl, y = fct_reorder(ship_type, nmile_per_bbl), fill = stat(x)), 
+                                          scale = 2, alpha = 0.4, rel_min_height = 0.01, color = &quot;white&quot;) +
+  theme_minimal() + 
+  scale_x_continuous(limits = c(0, 3)) +
+  scale_fill_viridis_c(option = &quot;D&quot;) +
+  theme(axis.title.x = element_text(hjust = 1),
+        axis.title.y = element_text(hjust = 1),
+        plot.title = element_text(hjust = 0.5, size = 10),
+        legend.position = &quot;none&quot;) +
+  labs(title = &quot;Distance per Barrel&quot;, x = &quot;Nautical Miles per Barrel&quot;, y = NULL)
+
+distance_per_fuel_plot
+## Picking joint bandwidth of 0.11</code></pre>
+<p><img src="/post/2020-02-14_euro_ship_exploration_files/figure-html/distance_per_fuel_plot-1.png" width="672" />
+##Add text here</p>
+<pre class="r"><code>total_ships_plot &lt;- z_t %&gt;% 
+  group_by(ship_type) %&gt;% 
+  count() %&gt;% 
+  ggplot() + 
+  geom_col(aes(x = fct_reorder(ship_type, n), y = n, fill = factor(ship_type)), 
+                                alpha = 0.8, color = &quot;white&quot;) +
+  geom_hline(yintercept = 0) +
+  theme_minimal() + 
+  coord_flip(clip = &quot;on&quot;) + 
+  scale_y_continuous(limits = c(0, 3800)) +
+  # scale_fill_viridis_c(option = &quot;C&quot;) +
+  theme(axis.title.x = element_text(hjust = 1),
+        axis.title.y = element_text(hjust = 1),
+        plot.title = element_text(hjust = 0.5, size = 10),
+        legend.position = &quot;none&quot;,
+        text = element_text(family = &quot;Calibri&quot;)) +
+  labs(title = &quot;Total Ships&quot;, y = &quot;Ships&quot;, x = NULL) 
+
+total_ships_plot</code></pre>
+<p><img src="/post/2020-02-14_euro_ship_exploration_files/figure-html/total_ships_plot-1.png" width="672" /></p>
+<p>##Add text here</p>
+<pre class="r"><code>fuel_co2_plot &lt;- z_t %&gt;% 
+  ggplot() +
+  geom_point(aes(x = `total_fuel_consumption_m_tonnes`/1e6, 
+                 y = `total_co₂_emissions_m_tonnes`/1e6, 
+                 color = ship_type)) +
+  geom_smooth(aes(x = total_fuel_consumption_m_tonnes/1e6, y = `total_co₂_emissions_m_tonnes`/1e6), 
+              method = &quot;lm&quot;, color = &quot;gray80&quot;, alpha = 0.8) + 
+  theme_minimal() +
+  theme(legend.position = &quot;bottom&quot;,
+       axis.title.x = element_text(hjust = 1),
+       axis.title.y = element_text(hjust = 1),
+       plot.title = element_text(hjust = 0.5, size = 10),
+       legend.text = element_text(size = 7),
+       legend.title = element_blank()) +
+  labs(title = &quot;CO2 Emissions ~ Fuel Consumption&quot;, x = &quot;Fuel Consumption (Milion Tonnes)&quot;, y = &quot;CO2 Emissions (Million Tonnes)&quot;)
+  
+  fuel_co2_plot
+## Warning: Removed 10 rows containing non-finite values (stat_smooth).
+## Warning: Removed 10 rows containing missing values (geom_point).</code></pre>
+<p><img src="/post/2020-02-14_euro_ship_exploration_files/figure-html/fuel_co2_plot-1.png" width="672" /></p>
+<!-- # ```{r patchwork} -->
+<!-- # total_ships_plot/(distance_per_fuel_plot + fuel_per_day_ridge_plot)/fuel_co2_plot  + -->
+<!-- #   patchwork::plot_annotation(title = "Exploration of Ship Data from EU Dataset", -->
+<!-- #                              caption = "Source: THETIS-MRV, ESAI Energy",  -->
+<!-- #                              theme = theme(text = element_text(family = "Calibri"),  -->
+<!-- #                                            plot.title = element_text(hjust = 0.5, face = "bold", family = "Calibri", size = 16))) -->
+<!-- # ``` -->
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" alt="Img link to Hugo website" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+  </body>
+</html>
+

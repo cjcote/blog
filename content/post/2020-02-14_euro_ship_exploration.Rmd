@@ -1,0 +1,198 @@
+---
+title: "Exploring Euro Ship Data"
+author: "Chris Cote"
+date: "2020-02-12T21:48:51-07:00"
+slug: exploring-euro-ship-data
+categories: []
+tags: []
+---
+
+
+```{r setup, include=FALSE, echo=FALSE, message=FALSE}
+knitr::opts_chunk$set(include = TRUE, echo = TRUE, message = FALSE, warnings = FALSE)
+
+```
+
+##Add text here 
+```{r, message = FALSE, warning = FALSE, echo = TRUE}
+library(tidyverse)
+library(readxl)
+library(ggridges)
+library(patchwork)
+
+z <- readxl::read_excel("~/Downloads/2018-v151-08022020-EU MRV Publication of information.xlsx", skip = 2)
+```
+
+
+##Add text here 
+
+```{r, message = FALSE, warning = FALSE, echo = TRUE}
+z_t <- z %>% 
+  set_names(., names(.) %>% str_to_lower() %>% str_replace_all(., " ", "_") %>% 
+              str_replace_all(., "\\[|\\]|\\(|\\)|", "") %>% 
+              str_replace_all(., "\\/", "per")) %>% 
+  select(imo_number, ship_type, annual_total_time_spent_at_sea_hours, 
+         fuel_consumptions_assigned_to_on_laden_m_tonnes,
+         annual_average_fuel_consumption_per_distance_kg_per_n_mile,
+         total_fuel_consumption_m_tonnes, everything()) %>% 
+  mutate_at(vars(-ship_type), as.numeric)
+
+```
+
+
+
+```{r total fuel consumption per ship type, message = FALSE, warning = FALSE, echo = TRUE}
+z_t %>% 
+  group_by(ship_type) %>% 
+  summarise(total_fuel_consumption_m_tonnes = sum(total_fuel_consumption_m_tonnes/365/1000*6.6, na.rm = TRUE)) %>% 
+  ggplot() + geom_col(aes(fct_reorder(ship_type, total_fuel_consumption_m_tonnes), total_fuel_consumption_m_tonnes)) +
+  coord_flip()
+```
+
+##Add text here 
+
+```{r ime at sea per ship type, message = FALSE, warning = FALSE, echo = TRUE}
+z_t %>% 
+  group_by(ship_type) %>% 
+  summarise(time = mean(annual_total_time_spent_at_sea_hours, na.rm = TRUE)) %>% 
+  ggplot() + geom_col(aes(fct_reorder(ship_type, time), time)) +
+  coord_flip()
+```
+
+##Add text here 
+
+```{r fuel per hour by ship type, message = FALSE, warning = FALSE, echo = TRUE}
+z_t %>% 
+  mutate(fuel_per_hour = total_fuel_consumption_m_tonnes/annual_total_time_spent_at_sea_hours * 24*6.6) %>% 
+  group_by(ship_type) %>% 
+  summarise(fuel_per_hour = mean(fuel_per_hour, na.rm = TRUE)) %>% 
+  ggplot() + geom_col(aes(fct_reorder(ship_type, fuel_per_hour), fuel_per_hour)) +
+  coord_flip()
+```
+
+##Add text here 
+
+```{r fuel per day, message = FALSE, warning = FALSE, echo = TRUE}
+
+fuel_per_day_ridge_plot <- z_t %>% 
+  mutate(fuel_per_day = total_fuel_consumption_m_tonnes/annual_total_time_spent_at_sea_hours*24*6.6) %>% 
+  filter(!is.na(fuel_per_day), !is.na(ship_type), 
+         fuel_per_day > 0, !is.infinite(fuel_per_day)) %>% 
+  group_by(ship_type) %>% 
+  mutate(avg_fuel_per_day  = mean(fuel_per_day)) %>% 
+  # ggplot() + geom_histogram(aes(x = fuel_per_day)) +
+  # facet_wrap(~ship_type)
+  ggplot() + 
+  geom_density_ridges_gradient(aes(x = fuel_per_day, y = fct_reorder(ship_type, avg_fuel_per_day), fill = stat(x)), 
+                               scale = 2, alpha = 0.4, rel_min_height = 0.01, color = "white") +
+  theme_minimal() + 
+  scale_x_continuous(limits = c(0, 700)) +
+  scale_fill_viridis_c(option = "C") +
+  theme(axis.title.x = element_text(hjust = 1),
+        axis.title.y = element_text(hjust = 1),
+        plot.title = element_text(hjust = 0.5, size = 10),
+        legend.position = "none") +
+  labs(title = "Fuel Used Per Day by Ship Type (000 b/d)",
+       x = "Fuel per Day (000 b/d)", y = NULL)
+
+fuel_per_day_ridge_plot
+```
+
+##Add text here 
+
+```{r miles per hour ridge plot, message = FALSE, warning = FALSE, echo = TRUE}
+miles_per_hour_ridge_plot <- z_t %>% 
+  mutate(miles = total_fuel_consumption_m_tonnes/(annual_average_fuel_consumption_per_distance_kg_per_n_mile/1000)) %>% 
+  mutate(miles_per_hour = miles/annual_total_time_spent_at_sea_hours) %>% 
+  filter(miles_per_hour > 0, !is.infinite(miles_per_hour)) %>% 
+  select(imo_number, ship_type, miles, miles_per_hour, annual_total_time_spent_at_sea_hours) %>%
+  ggplot() + geom_density_ridges_gradient(aes(x = miles_per_hour, y = fct_reorder(ship_type, miles_per_hour), fill = stat(x)), 
+                               scale = 2, alpha = 0.4, rel_min_height = 0.01, color = "white") +
+  theme_minimal() + 
+  scale_x_continuous(limits = c(0, 25)) +
+  scale_fill_viridis_c(option = "C") +
+  theme(axis.title.x = element_text(hjust = 1),
+        axis.title.y = element_text(hjust = 1),
+        plot.title = element_text(hjust = 0.5, size = 10),
+        legend.position = "none") +
+  labs(title = "Speed by Ship Type", x = "Nautical Miles per Hour", y = NULL)
+
+miles_per_hour_ridge_plot
+```
+
+##Add text here 
+
+```{r distance_per_fuel_plot, message = FALSE, warning = FALSE, echo = TRUE}
+distance_per_fuel_plot <- z_t %>% 
+  mutate(nmile_per_bbl = 1/(annual_average_fuel_consumption_per_distance_kg_per_n_mile*6.6/1000)) %>% 
+  # mutate(miles_per_hour = miles/annual_total_time_spent_at_sea_hours) %>% 
+  filter(nmile_per_bbl > 0, !is.infinite(nmile_per_bbl)) %>% 
+  # select(imo_number, ship_type, miles, miles_per_hour, annual_total_time_spent_at_sea_hours) %>%
+  ggplot() + geom_density_ridges_gradient(aes(x = nmile_per_bbl, y = fct_reorder(ship_type, nmile_per_bbl), fill = stat(x)), 
+                                          scale = 2, alpha = 0.4, rel_min_height = 0.01, color = "white") +
+  theme_minimal() + 
+  scale_x_continuous(limits = c(0, 3)) +
+  scale_fill_viridis_c(option = "D") +
+  theme(axis.title.x = element_text(hjust = 1),
+        axis.title.y = element_text(hjust = 1),
+        plot.title = element_text(hjust = 0.5, size = 10),
+        legend.position = "none") +
+  labs(title = "Distance per Barrel", x = "Nautical Miles per Barrel", y = NULL)
+
+distance_per_fuel_plot
+```
+##Add text here 
+
+```{r total_ships_plot, message = FALSE, warning = FALSE, echo = TRUE}
+total_ships_plot <- z_t %>% 
+  group_by(ship_type) %>% 
+  count() %>% 
+  ggplot() + 
+  geom_col(aes(x = fct_reorder(ship_type, n), y = n, fill = factor(ship_type)), 
+                                alpha = 0.8, color = "white") +
+  geom_hline(yintercept = 0) +
+  theme_minimal() + 
+  coord_flip(clip = "on") + 
+  scale_y_continuous(limits = c(0, 3800)) +
+  # scale_fill_viridis_c(option = "C") +
+  theme(axis.title.x = element_text(hjust = 1),
+        axis.title.y = element_text(hjust = 1),
+        plot.title = element_text(hjust = 0.5, size = 10),
+        legend.position = "none",
+        text = element_text(family = "Calibri")) +
+  labs(title = "Total Ships", y = "Ships", x = NULL) 
+
+total_ships_plot
+```
+
+##Add text here 
+
+```{r fuel_co2_plot, message = FALSE, warning = FALSE, echo = TRUE}
+fuel_co2_plot <- z_t %>% 
+  ggplot() +
+  geom_point(aes(x = `total_fuel_consumption_m_tonnes`/1e6, 
+                 y = `total_co₂_emissions_m_tonnes`/1e6, 
+                 color = ship_type)) +
+  geom_smooth(aes(x = total_fuel_consumption_m_tonnes/1e6, y = `total_co₂_emissions_m_tonnes`/1e6), 
+              method = "lm", color = "gray80", alpha = 0.8) + 
+  theme_minimal() +
+  theme(legend.position = "bottom",
+       axis.title.x = element_text(hjust = 1),
+       axis.title.y = element_text(hjust = 1),
+       plot.title = element_text(hjust = 0.5, size = 10),
+       legend.text = element_text(size = 7),
+       legend.title = element_blank()) +
+  labs(title = "CO2 Emissions ~ Fuel Consumption", x = "Fuel Consumption (Milion Tonnes)", y = "CO2 Emissions (Million Tonnes)")
+  
+  fuel_co2_plot
+
+```
+
+<!-- # ```{r patchwork} -->
+<!-- # total_ships_plot/(distance_per_fuel_plot + fuel_per_day_ridge_plot)/fuel_co2_plot  + -->
+<!-- #   patchwork::plot_annotation(title = "Exploration of Ship Data from EU Dataset", -->
+<!-- #                              caption = "Source: THETIS-MRV, ESAI Energy",  -->
+<!-- #                              theme = theme(text = element_text(family = "Calibri"),  -->
+<!-- #                                            plot.title = element_text(hjust = 0.5, face = "bold", family = "Calibri", size = 16))) -->
+<!-- # ``` -->
+
