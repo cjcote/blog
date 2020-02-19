@@ -92,7 +92,7 @@ tt %>%
 
 
 ### How frequently is David Sedaris on TAL?
-![David Sedaris](https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.csindy.com%2Fcoloradosprings%2Fdavid-sedaris-shares-his-weird-revelations-from-overseas%2FContent%3Foid%3D20526233&psig=AOvVaw0KNuDMlcf6QlzI2u0lBdaU&ust=1582166506147000&source=images&cd=vfe&ved=0CAIQjRxqFwoTCPDXkdvL3OcCFQAAAAAdAAAAABAD)
+![David Sedaris](/content/post/2020-02-14-this-american-r-blog_files/sedaris.jpg)
 David Sedaris is a frequent guest on This American Life, but how frequent?
 
 The chart below shows time between each episode that features David Sedaris.
