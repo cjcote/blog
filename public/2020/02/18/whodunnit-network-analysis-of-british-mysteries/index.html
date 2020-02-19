@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.64.0" />
+
+
+<title>Whodunnit? Network Analysis of British Mysteries - Chris Cote&#39;s Blog</title>
+<meta property="og:title" content="Whodunnit? Network Analysis of British Mysteries - Chris Cote&#39;s Blog">
+
+
+  <link href='/favicon.ico' rel='icon' type='image/x-icon'/>
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About</a></li>
+    
+    <li><a href="https://github.com/cjcote/">GitHub</a></li>
+    
+    <li><a href="/">Posts</a></li>
+    
+    <li><a href="https://twitter.com/cote_energy">Twitter</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">3 min read</span>
+    
+
+    <h1 class="article-title">Whodunnit? Network Analysis of British Mysteries</h1>
+
+    
+    <span class="article-date">2020-02-18</span>
+    
+
+    <div class="article-content">
+      
+
+
+<pre class="r"><code>knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+library(tidyverse)</code></pre>
+<pre><code>## Warning: package &#39;tidyverse&#39; was built under R version 3.5.2</code></pre>
+<pre><code>## ── Attaching packages ────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
+<pre><code>## ✓ ggplot2 3.2.1     ✓ purrr   0.3.3
+## ✓ tibble  2.1.3     ✓ dplyr   0.8.4
+## ✓ tidyr   1.0.2     ✓ stringr 1.4.0
+## ✓ readr   1.3.1     ✓ forcats 0.4.0</code></pre>
+<pre><code>## Warning: package &#39;ggplot2&#39; was built under R version 3.5.2</code></pre>
+<pre><code>## Warning: package &#39;tibble&#39; was built under R version 3.5.2</code></pre>
+<pre><code>## Warning: package &#39;tidyr&#39; was built under R version 3.5.2</code></pre>
+<pre><code>## Warning: package &#39;purrr&#39; was built under R version 3.5.2</code></pre>
+<pre><code>## Warning: package &#39;dplyr&#39; was built under R version 3.5.2</code></pre>
+<pre><code>## Warning: package &#39;stringr&#39; was built under R version 3.5.2</code></pre>
+<pre><code>## Warning: package &#39;forcats&#39; was built under R version 3.5.2</code></pre>
+<pre><code>## ── Conflicts ───────────────────────────────────────── tidyverse_conflicts() ──
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(tidygraph)</code></pre>
+<pre><code>## Warning: package &#39;tidygraph&#39; was built under R version 3.5.2</code></pre>
+<pre><code>## 
+## Attaching package: &#39;tidygraph&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:stats&#39;:
+## 
+##     filter</code></pre>
+<pre class="r"><code>library(ggraph)</code></pre>
+<pre><code>## Warning: package &#39;ggraph&#39; was built under R version 3.5.2</code></pre>
+<pre class="r"><code>library(britishcharacters) #remotes::install_github(&quot;cjcote/britishcharacters)</code></pre>
+<pre class="r"><code>characters &lt;- read_csv(&quot;https://raw.githubusercontent.com/cjcote/blog/master/public/characters.csv&quot;)
+
+#or load from package {britishcharacters} characters &lt;- britishcharacters::characters
+
+characters</code></pre>
+<pre><code>## # A tibble: 9,932 x 4
+##    character      show  season episode
+##    &lt;chr&gt;          &lt;chr&gt;  &lt;dbl&gt;   &lt;dbl&gt;
+##  1 Brenda Blethyn Vera       1       1
+##  2 David Leon     Vera       1       1
+##  3 Wunmi Mosaku   Vera       1       1
+##  4 Paul Ritter    Vera       1       1
+##  5 Neil Armstrong Vera       1       1
+##  6 Juliet Aubrey  Vera       1       1
+##  7 Craig Conway   Vera       1       1
+##  8 Philip Correia Vera       1       1
+##  9 Sam Fender     Vera       1       1
+## 10 Murray Head    Vera       1       1
+## # … with 9,922 more rows</code></pre>
+<pre class="r"><code>characters %&gt;% distinct(show)</code></pre>
+<pre><code>## # A tibble: 16 x 1
+##    show            
+##    &lt;chr&gt;           
+##  1 Vera            
+##  2 Doc Martin      
+##  3 Midsomer Murders
+##  4 Broadchurch     
+##  5 Foyles War      
+##  6 Happy Valley    
+##  7 Endeavour       
+##  8 Dr Who          
+##  9 Inspector Morse 
+## 10 Luther          
+## 11 Hinterland      
+## 12 Father Brown    
+## 13 Shetland        
+## 14 Bletchley Circle
+## 15 Grantchester    
+## 16 Sherlock</code></pre>
+<pre class="r"><code>britishcharacters::episode_search(show_select = &quot;Foyles War&quot;,season_select = 1, episode_select = 1)</code></pre>
+<p><img src="/post/2020-02-18-whodunnit-network-analysis-of-british-mysteries_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<p>Find the most characters in the most number of episodes</p>
+<pre class="r"><code>characters %&gt;% 
+  count(character, sort = TRUE) %&gt;% 
+  slice(1:15)</code></pre>
+<pre><code>## # A tibble: 15 x 2
+##    character         n
+##    &lt;chr&gt;         &lt;int&gt;
+##  1 Mark Williams    82
+##  2 Jane Wymark      81
+##  3 John Nettles     81
+##  4 Sorcha Cusack    81
+##  5 Barry Jackson    75
+##  6 Ian McNeice      75
+##  7 Martin Clunes    71
+##  8 Caroline Catz    70
+##  9 Joe Absolom      66
+## 10 David Tennant    64
+## 11 John Burton      61
+## 12 John Marquez     55
+## 13 Jason Hughes     53
+## 14 Selina Cadell    53
+## 15 Nancy Carroll    49</code></pre>
+<pre class="r"><code>characters %&gt;% 
+  count(character, sort = TRUE) %&gt;% 
+  slice(1:15) %&gt;% 
+  ggplot() + geom_col(aes(fct_reorder(character, n), n), fill = &quot;cornflowerblue&quot;)+
+  coord_flip() +
+  theme(panel.background = element_blank(),
+        plot.background = element_blank(),
+        panel.grid = element_line(color = &quot;gray90&quot;))</code></pre>
+<p><img src="/post/2020-02-18-whodunnit-network-analysis-of-british-mysteries_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<pre class="r"><code>britishcharacters::map_character(&quot;Mark Williams&quot;)</code></pre>
+<p><img src="/post/2020-02-18-whodunnit-network-analysis-of-british-mysteries_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>What episode has the most people?</p>
+<pre class="r"><code>characters %&gt;% 
+  group_by(show, season, episode) %&gt;% 
+  count(sort = TRUE)</code></pre>
+<pre><code>## # A tibble: 601 x 4
+## # Groups:   show, season, episode [601]
+##    show             season episode     n
+##    &lt;chr&gt;             &lt;dbl&gt;   &lt;dbl&gt; &lt;int&gt;
+##  1 Midsomer Murders      1       2   165
+##  2 Midsomer Murders      1       3   165
+##  3 Midsomer Murders      1       4   165
+##  4 Midsomer Murders      1       1   163
+##  5 Midsomer Murders      1       5   148
+##  6 Midsomer Murders      1       6   120
+##  7 Midsomer Murders      1       7    75
+##  8 Inspector Morse       1       1    60
+##  9 Dr Who                1       1    48
+## 10 Dr Who                1       4    47
+## # … with 591 more rows</code></pre>
+<p>Graph it!</p>
+<pre class="r"><code>britishcharacters::map_episode(&quot;Midsomer Murders&quot;, season = 1, episode_selected = 2)</code></pre>
+<p><img src="/post/2020-02-18-whodunnit-network-analysis-of-british-mysteries_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" alt="Img link to Hugo website" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+  </body>
+</html>
+
