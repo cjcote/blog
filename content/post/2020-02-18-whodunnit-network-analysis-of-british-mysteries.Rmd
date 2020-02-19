@@ -7,3 +7,671 @@ categories:
   - network
 tags: []
 ---
+```{r setup}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+library(tidyverse)
+library(tidygraph)
+library(ggraph)
+
+library(britishcharacters) #remotes::install_github("cjcote/britishcharacters)
+```
+
+```{r}
+characters <- read_csv("https://raw.githubusercontent.com/cjcote/blog/master/public/characters.csv")
+
+#or load from package {britishcharacters} characters <- britishcharacters::characters
+
+characters
+```
+```{r}
+characters %>% 
+  filter(!str_detect(characters, "Amazon")) %>% 
+  left_join(
+    characters %>% 
+      filter(!str_detect(characters, "Amazon")) %>% 
+      group_by(show) %>% 
+      distinct(show, episode_url) %>% 
+      group_by(show) %>% 
+      summarise(total_episodes_per_show = n()) %>% 
+      ungroup() 
+  ) %>% 
+  group_by(show) %>% 
+  ungroup() %>% 
+  group_by(characters) %>% 
+  mutate(appearances = n()) %>% 
+  ungroup() %>% 
+  distinct() %>% 
+  left_join(
+    characters %>% 
+      filter(!str_detect(characters, "Amazon")) %>% 
+      group_by(show) %>% 
+      distinct(characters, episode_url) %>% 
+      group_by(characters) %>% 
+      count(characters, sort = TRUE, name = "total_episodes_per_character") %>% 
+      ungroup() 
+  ) %>% 
+  distinct(characters, total_episodes_per_show, total_episodes_per_character)
+  summarise(x = total_episodes_per_character/total_episodes_per_show)
+  # ) %>% 
+  # mutate(total_episodes = sum(total_episodes_per_show)) %>%
+  # group_by(characters, show) %>% 
+  # mutate(weight_per_show = appearances/total_episodes_per_character) %>% 
+  # distinct(characters, show, weight_per_show) %>% 
+  # ungroup() %>% 
+  # arrange(weight_per_show)
+  # arrange(-appearances)
+```
+
+
+```{r}
+characters %>% 
+  filter(!str_detect(characters, "Amazon")) %>% 
+  group_by(characters) %>% 
+  count(show) %>% 
+  spread(show, n,0)
+  group_by(characters, show) %>% 
+  tally() %>% 
+  arrange(-n) 
+  spread(show, n, 0)
+  count(show)  
+  arrange(-n) %>% 
+  group_by(characters) %>% 
+  count() %>% 
+  arrange(-n)
+```
+
+
+```{r}
+characters %>% 
+    filter(!str_detect(characters, "Amazon")) %>%
+    group_by(show, characters) %>% 
+    tally() %>% 
+    spread(show, n, 0)
+```
+
+
+```{r}
+```
+
+
+```{r}
+characters %>% 
+    filter(!str_detect(characters, "Amazon")) %>%
+    nest(characters) %>% 
+    group_by(show) %>% 
+    mutate(episode = str_extract(episode_url, "ep[0-9]([0-9])?") %>% 
+             str_replace(., "ep", "") %>% 
+             as.numeric) %>% 
+    group_by(show) %>% 
+    arrange(show, season) %>% 
+    # select(show, season, episode,  top_url, episode_url) %>% 
+    mutate(cumulative_episodes = 1,
+           cumulative_episodes = cumsum(cumulative_episodes)) %>% 
+    group_by(show) %>% 
+    mutate(total_ep = max(cumulative_episodes)) %>% 
+    ungroup() %>% 
+    unnest(data) %>% 
+    group_by(characters, show) %>% 
+    summarise(n = n()) %>% 
+    arrange(characters, -n) %>% 
+    group_by(characters) %>% 
+    mutate(shows_appeared_in = n()) %>% 
+    ungroup() %>% 
+    arrange(-shows_appeared_in) %>% 
+    filter(shows_appeared_in > 2) %>% 
+    distinct(characters, show, shows_appeared_in) %>% 
+    ungroup() %>% 
+    ggplot() + geom_col(aes(fct_reorder(characters, -shows_appeared_in), shows_appeared_in, fill = show)) + 
+    coord_flip()
+```
+
+
+```{r}
+```
+
+
+```{r}
+characters %>% select(characters, everything())  %>% 
+  filter(!str_detect(characters, "Amazon")) %>%
+  group_by(characters) %>% 
+  mutate(appearances = n()) %>% 
+  group_by(characters, appearances) %>% 
+  nest() %>% 
+  arrange(-appearances)
+```
+
+
+```{r}
+```
+
+
+```{r}
+characters %>% 
+  mutate(episode = str_extract(episode_url, "_ep[0-9]([0-9])?([0-9])?") %>% 
+           str_replace(., "_ep", "") %>% as.numeric(.)) %>% 
+  select(character = characters, show, season, episode, everything())  %>% 
+  filter(character == "George Costigan")
+  arrange(character) %>% 
+  group_by(character, show) %>% 
+  summarise(n_episode_show = n()) %>%  
+  arrange(-n_episode_show) %>% 
+  group_by(character) %>% 
+  mutate(n_show = n()) %>% 
+  arrange(-n_show)
+```
+
+
+```{r}
+```
+
+
+```{r}
+characters %>% 
+    mutate(episode = str_extract(episode_url, "_ep[0-9]([0-9])?([0-9])?") %>% 
+             str_replace(., "_ep", "") %>% as.numeric(.)) %>% 
+    select(character = characters, show, season, episode) %>% 
+  mutate(episode = str_c(show, season, episode, sep = "-"))  %>%  
+  select(from = character, to = episode) %>% 
+  as_tbl_graph() -> characters_tbl_graph
+```
+
+
+```{r}
+```
+
+
+```{r}
+characters %>% 
+  filter(str_detect(show, "Vera")) %>%
+  mutate(episode = str_extract(episode_url, "_ep[0-9]([0-9])?([0-9])?") %>% 
+           str_replace(., "_ep", "") %>% as.numeric(.)) %>% 
+  select(character = characters, show, season, episode) %>% 
+  mutate(episode = str_c(show, season, episode, sep = "-"))  %>%  
+  group_by(character) %>% 
+  mutate(n = n()) %>% 
+  select(from = character, to = episode, n) %>% 
+  as_tbl_graph() %>% 
+  activate(nodes) %>% 
+  group_by(name) %>% 
+  mutate(n = n()) %>% 
+  ungroup() %>% 
+  ggraph(layout = "kk") +
+  geom_node_point() +
+  geom_edge_diagonal(color = "gray70", aes(alpha = n))  +
+  geom_node_label(data = . %>% filter(!str_detect(name,"Broadchurch|Happy Valley|Vera|Doc Martin")),
+                  aes(label = name, alpha = n), size = 2.8) +
+  theme_void() +
+  theme(legend.position = "none")
+```
+
+
+```{r}
+```
+
+
+```{r}
+characters %>% 
+  # filter(str_detect(show, "Vera")) %>%
+  mutate(episode = str_extract(episode_url, "_ep[0-9]([0-9])?([0-9])?") %>% 
+           str_replace(., "_ep", "") %>% as.numeric(.)) %>% 
+  select(character = characters, show, season, episode) %>% 
+  mutate(episode = str_c(show, season, episode, sep = "-")) %>% 
+  select(character, episode) %>%
+  group_by(episode) %>% 
+  mutate(n = n()) %>% 
+  ungroup() %>% 
+  distinct() %>% 
+  spread(episode, n) %>% 
+  gather(episode, n, -character)
+```
+
+
+```{r}
+```
+
+
+```{r}
+characters %>% 
+  mutate(episode = str_extract(episode_url, "_ep[0-9]([0-9])?([0-9])?") %>% 
+           str_replace(., "_ep", "") %>% as.numeric(.)) %>% 
+  select(character = characters, show, season, episode) %>% 
+  mutate(episode = str_c(show, season, episode, sep = "-")) %>% 
+  select(character, episode) %>% 
+  full_join(
+    characters %>% 
+      mutate(episode = str_extract(episode_url, "_ep[0-9]([0-9])?([0-9])?") %>% 
+               str_replace(., "_ep", "") %>% as.numeric(.)) %>% 
+      select(character = characters, show, season, episode) %>% 
+      mutate(episode = str_c(show, season, episode, sep = "-")) %>% 
+      select(character, episode),
+    by = c("episode")
+  ) %>% 
+  rename(from = character.x, to = character.y) %>% 
+  group_by(from, to) %>% 
+  mutate(n = n()) %>%
+  # filter(n > 5) %>% 
+  # filter(str_detect(from, "Blethyn")) %>% #filter just for one character
+  arrange(n) %>%
+  as_tbl_graph() %>% #inside graph now
+  activate(nodes) %>% 
+  left_join(characters %>% 
+              # filter(str_detect(show, "Vera")) %>%
+              mutate(episode = str_extract(episode_url, "_ep[0-9]([0-9])?([0-9])?") %>% 
+                       str_replace(., "_ep", "") %>% as.numeric(.)) %>% 
+              select(character = characters, show, season, episode) %>% 
+              mutate(episode = str_c(show, season, episode, sep = "-")) %>% 
+              select(character, episode) %>% 
+              full_join(
+                characters %>% 
+                  # filter(str_detect(show, "Vera")) %>%
+                  mutate(episode = str_extract(episode_url, "_ep[0-9]([0-9])?([0-9])?") %>% 
+                           str_replace(., "_ep", "") %>% as.numeric(.)) %>% 
+                  select(character = characters, show, season, episode) %>% 
+                  mutate(episode = str_c(show, season, episode, sep = "-")) %>% 
+                  select(character, episode),
+                by = c("episode")
+              ) %>% 
+              # filter(character == "Brenda Blethyn") %>% 
+              rename(from = character.x, to = character.y) %>% 
+              group_by(from, to) %>% 
+              mutate(n = n()) %>% 
+              filter(n > 1) %>% 
+              filter(str_detect(from, "Blethyn")) %>% 
+              arrange(n) %>% 
+              rename(name = to) %>% 
+              distinct(name, n)) %>%  
+  ggraph(layout = "kk") +
+  geom_node_point() +
+  geom_edge_diagonal(aes(label = n, color = n,alpha = n, label_alpha = n))  +
+  geom_node_label(
+                  aes(label = name, alpha = n, label_alpha = n), size = 2.8) +
+  theme_void() +
+  theme(legend.position = "none")
+```
+
+
+```{r}
+```
+
+
+```{r}
+characters %>% 
+  mutate(episode = str_extract(episode_url, "_ep[0-9]([0-9])?([0-9])?") %>% 
+           str_replace(., "_ep", "") %>% as.numeric(.)) %>% 
+  select(character = characters, show, episode) %>% 
+  group_by(character, show) %>% 
+  count() %>% 
+  group_by(character) %>% 
+  mutate(total_shows = n()) %>% 
+  arrange(-total_shows) %>% 
+  ungroup() %>% 
+  filter(total_shows > 1) %>% 
+  spread(show, n, 0) %>% 
+  arrange(-total_shows)
+```
+
+
+```{r}
+```
+
+
+```{r}
+characters %>% 
+  mutate(episode = str_extract(episode_url, "_ep[0-9]([0-9])?([0-9])?") %>% 
+           str_replace(., "_ep", "") %>% as.numeric(.)) %>% 
+  select(character = characters, show, episode) %>% 
+  group_by(character, show) %>% 
+  count() %>% 
+  group_by(character) %>% 
+  mutate(total_shows = n()) %>% 
+  arrange(-total_shows) %>% 
+  ungroup() %>% 
+  filter(total_shows > 4) 
+  # distinct(character, total_shows) %>% 
+  rename(to = character, from = show) %>% 
+  arrange(from) %>% 
+  as_tbl_graph() %>% 
+  activate(nodes) %>% 
+  left_join(characters %>% 
+              mutate(episode = str_extract(episode_url, "_ep[0-9]([0-9])?([0-9])?") %>% 
+                       str_replace(., "_ep", "") %>% as.numeric(.)) %>% 
+              select(character = characters, show, episode) %>% 
+              group_by(character, show) %>% 
+              count() %>% 
+              group_by(character) %>% 
+              mutate(total_shows = n()) %>% 
+              arrange(-total_shows) %>% 
+              ungroup() %>% 
+              filter(total_shows > 1) %>% 
+              distinct(character, total_shows) %>% 
+              rename(name = character)) %>% 
+  mutate(show_label = ifelse(str_detect()),
+         character_label = ifelse(!is.na(total_shows) & total_shows > 3, name, NA)) %>% 
+  # activate(edges) %>% 
+  # arrange(to) %>% 
+  # group_by(to) %>% 
+  # mutate(show_combo = cumprod(from) %>% factor) %>% 
+  ggraph(layout = "kk") +
+  geom_edge_link(aes(color = factor(from), alpha = n), 
+                 show.legend = FALSE) + 
+  geom_node_point(aes(size = total_shows, alpha = total_shows)) +
+  geom_node_label(aes(label = show_label), alpha = 3/5) +
+  geom_node_label(aes(label = character_label), color = "blue", size = 2)+ 
+  theme_void()
+```
+
+
+```{r}
+episode_search <- function(show_select, season_select, episode_select) {
+  characters %>% 
+  group_by(character, show) %>% 
+  count() %>% 
+  group_by(character) %>% 
+  mutate(total_shows = n()) %>% 
+  arrange(-total_shows) %>% 
+  ungroup() %>% 
+  filter(total_shows > 1) %>%
+  # distinct(character, total_shows) %>% 
+  rename(to = character, from = show) %>% 
+  arrange(from) %>% 
+  as_tbl_graph() %>% 
+  activate(nodes) %>% 
+  left_join(characters %>% 
+              filter(show == show_select, 
+                     season == season_select, 
+                     episode == episode_select) %>% 
+              group_by(character, show) %>% 
+              count() %>% 
+              group_by(character) %>% 
+              mutate(total_shows = n()) %>% 
+              arrange(-total_shows) %>% 
+              ungroup() %>% 
+              # filter(total_shows > 1) %>%
+              distinct(character, total_shows) %>% 
+              rename(name = character)) %>% 
+  mutate(show_label = ifelse(str_detect(name, characters %>% distinct(show) %>% 
+                                          pull(show) %>% 
+                                          paste(collapse = "|")), name, NA),
+         character_label = ifelse(!is.na(total_shows), name, NA)) %>% 
+  ggraph(layout = "kk") +
+  geom_edge_link(aes(color = factor(from), alpha = n), 
+                 show.legend = FALSE) + 
+  geom_node_point(aes(size = total_shows, alpha = total_shows)) +
+  geom_node_label(aes(label = show_label), alpha = 3/5) +
+  geom_node_label(aes(label = character_label), color = "blue", size = 2)+ 
+  theme_void()
+```
+
+
+```{r}
+}
+```
+
+
+```{r}
+episode_search("Vera", 9, 1)
+```
+
+
+```{r}
+```
+
+
+```{r}
+characters %>% 
+  mutate(episode = str_extract(episode_url, "_ep[0-9]([0-9])?([0-9])?") %>% 
+           str_replace(., "_ep", "") %>% as.numeric(.)) %>% 
+  select(to = characters, show, season, episode) %>% 
+  transmute(to = to, from = paste(show, season, episode, sep = "-")) %>% 
+  as_tbl_graph() %>% 
+  activate(nodes) %>% as_tibble() %>% 
+  print(n = Inf)
+  activate(nodes) %>% 
+  mutate(id = 1:n()) 
+  # filter(total_shows > 1) %>%
+  # distinct(character, total_shows) %>% 
+  # rename(to = character, from = show) %>% 
+  full_join(characters %>% 
+              mutate(episode = str_extract(episode_url, "_ep[0-9]([0-9])?([0-9])?") %>% 
+                       str_replace(., "_ep", "") %>% as.numeric(.)) %>% 
+              select(character = characters, show, episode, season), by = c("show", "season", "episode")) %>% 
+  select(character_1 = character.x, character_2 = character.y, show, season, episode) %>% 
+  filter(character_1 != character_2) %>% 
+  group_by(character, show) %>% 
+  mutate(distinct_eps = n()) %>% 
+  group_by(name) %>% 
+  mutate(distinct_shows = n()) %>% 
+  # select(-total_shows.x, -total_shows.y) %>% 
+  filter(from == "Vera", season == 8, episode == 4) %>% 
+  group_by(from) %>% 
+  arrange(from) %>% 
+  as_tbl_graph() %>% 
+  ggraph(layout = "kk") +
+  geom_edge_link(aes(color = factor(from), alpha = distinct_eps), 
+                 show.legend = FALSE)  
+  # geom_node_point(aes(size = total_shows, alpha = total_shows)) +
+  # geom_node_label(aes(label = show_label), alpha = 3/5) +
+  # geom_node_label(aes(label = character_label), color = "blue", size = 2)+ 
+  theme_void()
+```
+
+
+```{r}
+```
+
+
+```{r}
+char_filt <- characters%>% 
+  filter(character %in% (
+    characters %>% 
+      filter(show == "Vera", 
+             season == 1, 
+             episode == 3) %>% 
+      pull(character)
+  )) %>% mutate(selected = 1) %>% 
+  rename(name = character)
+```
+
+
+```{r}
+```
+
+
+```{r}
+character_format %>% 
+  group_by(character) %>% 
+  mutate(n = n()) %>% 
+  ungroup() %>% 
+  filter(n > 1) %>% 
+  as_tbl_graph() %>%
+  activate(nodes) %>% 
+  left_join(char_filt %>% 
+              distinct(name, .keep_all = TRUE)
+            )  %>% 
+    ggraph(layout = "kk") +
+    geom_edge_link(alpha = 1/100, size = 0.3)  + 
+  # geom_edge_link(aes(color ))
+  geom_node_label(aes(label = ifelse(name %in% unique(character_format$show), name, NA), color = name), size = 5,
+                  show.legend = FALSE) + 
+  geom_node_label(aes(label = ifelse(!(name %in% unique(character_format$show)) & selected == 1, name, NA)), size = 3,
+                  show.legend = FALSE) + 
+  # geom_node_point(aes(size = total_shows, alpha = total_shows)) +
+  # geom_node_label(aes(label = show_label), alpha = 3/5) +
+  # geom_node_label(aes(label = character_label), color = "blue", size = 2)+ 
+  theme_void()
+```
+
+
+```{r}
+```
+
+
+```{r}
+map_episode <- function(show_selected, season_selected, episode_selected) {
+  characters %>% 
+    left_join(characters%>% 
+                filter(character %in% (
+                  characters %>% 
+                    filter(show == show_selected, 
+                           season == season_selected, 
+                           episode == episode_selected) %>% 
+                    pull(character)
+                )) %>% mutate(selected = 1))  %>% 
+    filter(selected == 1) %>% 
+    as_tbl_graph() %>% 
+    ggraph(layout = "graphopt") +
+    geom_edge_link() +
+    geom_node_label(aes(label = name))+
+    # geom_node_label(aes(label = ifelse(name %in% unique(characters$show), name, NA), color = name), show.legend = FALSE, size = 5) +
+    # geom_node_label(aes(label = ifelse(!(name %in% unique(characters$show)), name, NA)), size = 3, show.legend = FALSE) + 
+    theme_void() 
+}
+```
+
+
+```{r}
+```
+
+
+```{r}
+map_episode("Vera", 9, 4)  
+characters %>% distinct(show)
+```
+
+
+```{r}
+```
+
+
+```{r}
+map_character <- function(character_selected,...) {
+  characters %>% 
+    filter(str_detect(character, character_selected)) %>% 
+    as_tbl_graph() %>% 
+    ggraph(layout = "graphopt") +
+    geom_edge_link() +
+    geom_node_label(aes(label = name)) +
+    # geom_node_label(aes(label = ifelse(name %in% unique(characters$show), name, NA), color = name), show.legend = FALSE, size = 4) +
+    # geom_node_label(aes(label = ifelse(!(name %in% unique(characters$show)), name, NA)), size = 3, show.legend = FALSE) + 
+    theme_void()
+}
+```
+
+
+```{r}
+```
+
+
+```{r}
+map_character("Mark Williams")
+```
+
+
+```{r}
+```
+
+
+```{r}
+characters %>% 
+  group_by(character) %>% 
+  mutate(n = n()) %>% 
+  mutate(distinct_show = n_distinct(show)) %>% 
+  ungroup() %>% 
+  arrange(-distinct_show) %>% 
+  group_by(character) %>% 
+  arrange(character) %>% 
+  filter(distinct_show > 3) %>% 
+  filter(any(str_detect(show, "Midsomer"))) %>% 
+  # filter(distinct_show == 5) %>% 
+  distinct(character) %>% 
+  pull(character) %>% 
+  paste(collapse="|") %>% 
+  map_character()
+```
+
+
+```{r}
+characters %>% 
+  # filter(str_detect(character, "Mark Williams|George Costigan|Frances Barber")) %>% 
+  as_tbl_graph() %>% 
+  activate(edges) %>% 
+  left_join(
+    characters %>% 
+      # filter(str_detect(character, "Mark Williams|George Costigan")) %>% 
+      distinct(character) %>% 
+      mutate(from = 1:n())
+  ) %>% 
+  left_join(
+    characters %>% 
+      # filter(str_detect(character, "Mark Williams|George Costigan|Frances Barber")) %>% 
+      distinct(show) %>% 
+      mutate(to = ((characters %>% 
+                      filter(str_detect(character, "Mark Williams|George Costigan|Frances Barber")) %>%
+                      distinct(character) %>% nrow())+1):(n() + (characters %>%
+                                                                    filter(str_detect(character, "Mark Williams|George Costigan|Frances Barber")) %>%
+                                                                   distinct(character) %>% nrow())))
+    
+  ) -> full_graph
+```
+
+
+```{r}
+full_graph %>% 
+  activate(edges) %>% 
+  mutate(selected = ifelse(show == "Vera" & season == 9 & episode == 4, TRUE, FALSE),
+         edge_color = ifelse(selected == TRUE, "red", "gray80"),
+         edge_alpha = ifelse(selected == TRUE, 1, 1/50)) %>% 
+  activate(nodes) %>% 
+  mutate(selected = ifelse(name %in% (characters %>% filter(show == "Vera",
+                                                 season == 9,
+                                                 episode == 4) %>% pull(character)), TRUE, FALSE),
+         label = ifelse(selected == TRUE, name, NA),
+         alpha = ifelse(selected == TRUE, 1, 1/10)) %>%
+  ggraph(layout = "graphopt") +
+  geom_node_text(aes(label = label), size = 2) +
+  geom_edge_link(aes(color = edge_color), alpha = 1/50) +
+  theme_void() +
+  theme(legend.position = "none")
+```
+
+
+```{r}
+characters %>% 
+  filter(show == "Vera", season == 9, episode == 4) -> character_filtered
+```
+
+
+```{r}
+character_filtered %>% 
+  as_tbl_graph() %>% 
+  activate(edges) %>% 
+  left_join(
+    characters %>% 
+      # filter(str_detect(character, "Mark Williams|George Costigan")) %>% 
+      distinct(character) %>% 
+      mutate(from = 1:n())
+  ) %>% 
+  left_join(
+    character_filtered %>% 
+      # filter(str_detect(character, "Mark Williams|George Costigan|Frances Barber")) %>% 
+      distinct(show) %>% 
+      mutate(to = ((character_filtered %>% 
+                      # filter(str_detect(character, "Mark Williams|George Costigan|Frances Barber")) %>% 
+                      distinct(character) %>% nrow())+1):(n() + (character_filtered %>% 
+                                                                   # filter(str_detect(character, "Mark Williams|George Costigan|Frances Barber")) %>% 
+                                                                   distinct(character) %>% nrow())))
+    
+  ) -> character_filtered_graph
+```
+
+
+```{r}
+character_filtered_graph %>% 
+  ggraph(layout = "graphopt") +
+  geom_node_text(aes(label = name), size = 4) +
+  geom_edge_link() +
+  theme_void() +
+  theme(legend.position = "none")
+
+```
+
