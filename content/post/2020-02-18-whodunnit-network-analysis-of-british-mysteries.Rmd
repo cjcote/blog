@@ -1,0 +1,9 @@
+---
+title: Whodunnit? Network Analysis of British Mysteries
+author: Chris Cote
+date: '2020-02-18'
+slug: whodunnit-network-analysis-of-british-mysteries
+categories:
+  - network
+tags: []
+---
