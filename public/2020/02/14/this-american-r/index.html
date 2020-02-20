@@ -78,17 +78,11 @@
 
 
 <pre class="r"><code>library(tidyverse)
-?theme_set</code></pre>
+theme_cc &lt;- theme(panel.grid = element_line(color = &quot;gray90&quot;),
+        panel.background = element_blank(),
+        plot.background = element_blank())</code></pre>
 <pre class="r"><code>tal &lt;- read_csv(&quot;~/Documents/HKS/rtutorial/data/this_american_life/tal_complete.csv&quot;)</code></pre>
 <pre class="r"><code>tal1 &lt;- tal %&gt;% slice(1)</code></pre>
-<pre class="r"><code>tal1 %&gt;% 
-  select(content) %&gt;% 
-  mutate(content = str_replace_all(content, &quot;\\n|\\\n&quot;, &quot; &quot;) %&gt;% 
-           str_trim(.,&quot;both&quot;))</code></pre>
-<pre><code>## # A tibble: 1 x 1
-##   content                                                                       
-##   &lt;chr&gt;                                                                         
-## 1 &quot;1:  New Beginnings Transcript  Originally aired 11.17.1995 Note: This Americ…</code></pre>
 <pre class="r"><code>tal_tidy &lt;- tal %&gt;% slice(1:100) %&gt;%  
   tidytext::unnest_tokens(&quot;word&quot;, content) %&gt;% 
   mutate(title = str_replace_all(title, &quot;\\\n&quot;, &quot; &quot;) %&gt;% 
@@ -111,16 +105,17 @@
   arrange(air_date) %&gt;% 
   mutate(title_words = str_c(title, top_words, sep = &quot;: &quot;)) %&gt;% 
   ggplot() + 
-  geom_text(aes(-show_number, 0, label = title_words), size = 5) + 
+  geom_text(aes(-show_number, -5, label = title_words), size = 5, hjust = 0) + 
   # scale_x_date(date_labels = &quot;%y-%m-%d&quot;) +
   theme(axis.text = element_blank(),
         axis.ticks = element_blank(),
         panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) +
-  coord_flip() +
+  coord_flip() + 
+  scale_y_continuous(limits = c(-6, 6)) +
   labs(x = NULL, y = NULL, title = &quot;Episode Title and Unique Words&quot;)+
   NULL</code></pre>
-<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-5-1.png" width="960" /></p>
+<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
 <pre class="r"><code>tt &lt;- tal_tf_idf %&gt;% 
   arrange(-tf_idf) %&gt;% 
   group_by(word) %&gt;% 
@@ -136,12 +131,12 @@ tt %&gt;%
   ggplot(aes(tf_idf, total_n)) + 
   geom_point(aes(size = total_shows, alpha = tf_idf), shape = 21) +
   ggrepel::geom_text_repel(aes(label = word), size = 3) +
-  scale_y_log10()</code></pre>
-<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+  scale_y_log10() +
+  theme_cc</code></pre>
+<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
 <div id="how-frequently-is-david-sedaris-on-tal" class="section level3">
 <h3>How frequently is David Sedaris on TAL?</h3>
-<p><img src="/post/2020-02-14-this-american-r-blog_files/sedaris.png" alt="David Sedaris" />
-David Sedaris is a frequent guest on This American Life, but how frequent?</p>
+<p>David Sedaris is a frequent guest on This American Life, but how frequent?</p>
 <p>The chart below shows time between each episode that features David Sedaris.</p>
 <pre class="r"><code>tal %&gt;% filter(str_detect(content, regex(&quot;sedaris&quot;,ignore_case = TRUE))) %&gt;%   tidytext::unnest_tokens(&quot;word&quot;, content) %&gt;% 
   filter(word == &quot;sedaris&quot;) %&gt;% 
@@ -152,8 +147,10 @@ David Sedaris is a frequent guest on This American Life, but how frequent?</p>
   mutate(time_between = as.numeric(air_date - lag(air_date))) %&gt;% 
   ggplot(aes(show_number, time_between)) +
   geom_point() +
-  geom_line()</code></pre>
-<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+  geom_line() +
+  theme_cc +
+  labs(title = &quot;Where&#39;s David?&quot;, x = &quot;Show Number&quot;, y = &quot;Days since Last Sedaris Appearance&quot;)</code></pre>
+<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
 </div>
 
     </div>
