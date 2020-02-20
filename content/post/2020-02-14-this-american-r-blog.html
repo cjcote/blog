@@ -8,7 +8,8 @@ categories: Text
 
 
 
-<pre class="r"><code>library(tidyverse)</code></pre>
+<pre class="r"><code>library(tidyverse)
+?theme_set</code></pre>
 <pre class="r"><code>tal &lt;- read_csv(&quot;~/Documents/HKS/rtutorial/data/this_american_life/tal_complete.csv&quot;)</code></pre>
 <pre class="r"><code>tal1 &lt;- tal %&gt;% slice(1)</code></pre>
 <pre class="r"><code>tal1 %&gt;% 
@@ -70,7 +71,7 @@ tt %&gt;%
 <p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
 <div id="how-frequently-is-david-sedaris-on-tal" class="section level3">
 <h3>How frequently is David Sedaris on TAL?</h3>
-<p><img src="https://www.google.com/url?sa=i&amp;url=https%3A%2F%2Fwww.csindy.com%2Fcoloradosprings%2Fdavid-sedaris-shares-his-weird-revelations-from-overseas%2FContent%3Foid%3D20526233&amp;psig=AOvVaw0KNuDMlcf6QlzI2u0lBdaU&amp;ust=1582166506147000&amp;source=images&amp;cd=vfe&amp;ved=0CAIQjRxqFwoTCPDXkdvL3OcCFQAAAAAdAAAAABAD" alt="David Sedaris" />
+<p><img src="/post/2020-02-14-this-american-r-blog_files/sedaris.png" alt="David Sedaris" />
 David Sedaris is a frequent guest on This American Life, but how frequent?</p>
 <p>The chart below shows time between each episode that features David Sedaris.</p>
 <pre class="r"><code>tal %&gt;% filter(str_detect(content, regex(&quot;sedaris&quot;,ignore_case = TRUE))) %&gt;%   tidytext::unnest_tokens(&quot;word&quot;, content) %&gt;% 

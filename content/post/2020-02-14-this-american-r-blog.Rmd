@@ -7,6 +7,8 @@ categories: Text
 ---
 ```{r setup, message = FALSE, warning = FALSE, echo = TRUE}
 library(tidyverse)
+?theme_set
+
 ```
 
 ```{r read_data, message = FALSE, warning = FALSE, echo = TRUE}
@@ -92,7 +94,7 @@ tt %>%
 
 
 ### How frequently is David Sedaris on TAL?
-![David Sedaris](/content/post/2020-02-14-this-american-r-blog_files/sedaris.jpg)
+![David Sedaris](/post/2020-02-14-this-american-r-blog_files/sedaris.png)
 David Sedaris is a frequent guest on This American Life, but how frequent?
 
 The chart below shows time between each episode that features David Sedaris.
