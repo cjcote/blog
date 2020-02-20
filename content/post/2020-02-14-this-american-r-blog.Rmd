@@ -5,26 +5,29 @@ date: '2020-02-14'
 slug: this-american-r
 categories: Text
 ---
+
+## Motivation
+I love This American Life. I thought it would be a fun corpus to look at and do some text analysis on. I'm still working on getting a public and updated version of this dataset up, but for now, let's just look at what we can see!
+
+## Setup
+Load tidyverse, set theme, read in local file...
 ```{r setup, message = FALSE, warning = FALSE, echo = TRUE}
 library(tidyverse)
+
 theme_cc <- theme(panel.grid = element_line(color = "gray90"),
         panel.background = element_blank(),
-        plot.background = element_blank())
+        plot.background = element_blank(),
+        plot.title = element_text(hjust = 0.5))
 
-```
-
-```{r read_data, message = FALSE, warning = FALSE, echo = TRUE}
 tal <- read_csv("~/Documents/HKS/rtutorial/data/this_american_life/tal_complete.csv")
-```
-
-```{r, message = FALSE, warning = FALSE, echo = TRUE}
-tal1 <- tal %>% slice(1)
 
 ```
 
 
+## Cleaning
+Do some preliminary cleaning, taking out carriage return characters, getting rid of stopwords -- all on first 100 episodes only
 ```{r, message = FALSE, warning = FALSE, echo = TRUE}
-tal_tidy <- tal %>% slice(1:100) %>%  
+tal_tidy <- tal %>%  slice(1:100) %>% 
   tidytext::unnest_tokens("word", content) %>% 
   mutate(title = str_replace_all(title, "\\\n", " ") %>% 
            str_replace(., "Transcript.+Originally aired.+", "")) %>% 
@@ -32,7 +35,11 @@ tal_tidy <- tal %>% slice(1:100) %>%
 ```
 
 
+Let's create a file that gives us the tf_idf of the whole corpus. 
 
+Read more in the fantastic [Tidy Text Mining] book (https://www.tidytextmining.com/tfidf.html)
+
+[(oops! ... )](https://juliasilge.com/blog/introducing-tidylo/)
 ```{r, message = FALSE, warning = FALSE, echo = TRUE}
 tal_tf_idf <- tal_tidy  %>% 
   select(title, word) %>% 
@@ -43,8 +50,8 @@ tal_tf_idf <- tal_tidy  %>%
   
 ```
 
-
-```{r fig.height=20, fig.width = 7, message = FALSE, warning = FALSE, echo = TRUE}
+Using the tf idf dataset, let's look at the most important words in the first 50 episodes ever. 
+```{r fig.height=20, fig.width = 6.5, message = FALSE, warning = FALSE, echo = TRUE}
 tal_tf_idf %>% 
   group_by(title) %>% 
   arrange(-tf_idf) %>% 
@@ -56,18 +63,22 @@ tal_tf_idf %>%
   arrange(air_date) %>% 
   mutate(title_words = str_c(title, top_words, sep = ": ")) %>% 
   ggplot() + 
-  geom_text(aes(-show_number, -5, label = title_words), size = 5, hjust = 0) + 
+  geom_text(aes(-show_number, -5, label = title_words), size = 3, hjust = 0) + 
   # scale_x_date(date_labels = "%y-%m-%d") +
   theme(axis.text = element_blank(),
         axis.ticks = element_blank(),
         panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) +
+    scale_y_continuous(limits = c(-6, 6)) +
   coord_flip() + 
-  scale_y_continuous(limits = c(-6, 6)) +
-  labs(x = NULL, y = NULL, title = "Episode Title and Unique Words")+
+  labs(x = NULL, y = NULL, title = "Episode Title and Unique Words") +
   NULL
 ```
 
+
+OK now let's look at the words that are most unique per episode and most frequently occuring overall
+
+Hmmm... Bob Dole and Frank Sinatra! Ira has some questions to answer.
 ```{r, message = FALSE, warning = FALSE, echo = TRUE}
 tt <- tal_tf_idf %>% 
   arrange(-tf_idf) %>% 
@@ -90,9 +101,11 @@ tt %>%
 ```
 
 
+
+
 ### How frequently is David Sedaris on TAL?
 
-David Sedaris is a frequent guest on This American Life, but how frequent?
+Frequent listerns know that David Sedaris is a frequent guest on This American Life. The question is: how frequent? Sometimes it feels like he's on every 10 episodes. Is this true?
 
 The chart below shows time between each episode that features David Sedaris.
 
@@ -111,4 +124,24 @@ tal %>% filter(str_detect(content, regex("sedaris",ignore_case = TRUE))) %>%   t
   theme_cc +
   labs(title = "Where's David?", x = "Show Number", y = "Days since Last Sedaris Appearance")
 ```
+
+
+```{r}
+tal %>% filter(str_detect(content, regex("sedaris",ignore_case = TRUE))) %>%   tidytext::unnest_tokens("word", content) %>% 
+  filter(word == "sedaris") %>% 
+  group_by(show_number, air_date) %>% 
+  count() %>% 
+  ungroup() %>% 
+  arrange(air_date) %>% 
+  mutate(time_between = as.numeric(air_date - lag(air_date))) %>% 
+  group_by(year = lubridate::year(air_date)) %>% 
+  summarise(mean_time_between = mean(time_between, na.rm = TRUE)) %>% 
+  ggplot() + geom_col(aes(year, mean_time_between), alpha = 4/5, 
+                      fill = "cornflowerblue", 
+                      color = "midnightblue") +
+  geom_hline(yintercept = 0) + 
+  theme_cc +
+  labs(title = "Average time since last appearance of David Sedaris", x = NULL, y = "Days")
+```
+
 

@@ -8,23 +8,40 @@ categories: Text
 
 
 
+<div id="motivation" class="section level2">
+<h2>Motivation</h2>
+<p>I love This American Life. I thought it would be a fun corpus to look at and do some text analysis on. I’m still working on getting a public and updated version of this dataset up, but for now, let’s just look at what we can see!</p>
+</div>
+<div id="setup" class="section level2">
+<h2>Setup</h2>
+<p>Load tidyverse, set theme, read in local file…</p>
 <pre class="r"><code>library(tidyverse)
+
 theme_cc &lt;- theme(panel.grid = element_line(color = &quot;gray90&quot;),
         panel.background = element_blank(),
-        plot.background = element_blank())</code></pre>
-<pre class="r"><code>tal &lt;- read_csv(&quot;~/Documents/HKS/rtutorial/data/this_american_life/tal_complete.csv&quot;)</code></pre>
-<pre class="r"><code>tal1 &lt;- tal %&gt;% slice(1)</code></pre>
-<pre class="r"><code>tal_tidy &lt;- tal %&gt;% slice(1:100) %&gt;%  
+        plot.background = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+
+tal &lt;- read_csv(&quot;~/Documents/HKS/rtutorial/data/this_american_life/tal_complete.csv&quot;)</code></pre>
+</div>
+<div id="cleaning" class="section level2">
+<h2>Cleaning</h2>
+<p>Do some preliminary cleaning, taking out carriage return characters, getting rid of stopwords – all on first 100 episodes only</p>
+<pre class="r"><code>tal_tidy &lt;- tal %&gt;%  slice(1:100) %&gt;% 
   tidytext::unnest_tokens(&quot;word&quot;, content) %&gt;% 
   mutate(title = str_replace_all(title, &quot;\\\n&quot;, &quot; &quot;) %&gt;% 
            str_replace(., &quot;Transcript.+Originally aired.+&quot;, &quot;&quot;)) %&gt;% 
   anti_join(tidytext::stop_words)</code></pre>
+<p>Let’s create a file that gives us the tf_idf of the whole corpus.</p>
+<p>Read more in the fantastic [Tidy Text Mining] book (<a href="https://www.tidytextmining.com/tfidf.html" class="uri">https://www.tidytextmining.com/tfidf.html</a>)</p>
+<p><a href="https://juliasilge.com/blog/introducing-tidylo/">(oops! … )</a></p>
 <pre class="r"><code>tal_tf_idf &lt;- tal_tidy  %&gt;% 
   select(title, word) %&gt;% 
   group_by(title) %&gt;% 
   count(word, sort = TRUE) %&gt;% 
   ungroup() %&gt;% 
   tidytext::bind_tf_idf(word, title, n)</code></pre>
+<p>Using the tf idf dataset, let’s look at the most important words in the first 50 episodes ever.</p>
 <pre class="r"><code>tal_tf_idf %&gt;% 
   group_by(title) %&gt;% 
   arrange(-tf_idf) %&gt;% 
@@ -36,17 +53,19 @@ theme_cc &lt;- theme(panel.grid = element_line(color = &quot;gray90&quot;),
   arrange(air_date) %&gt;% 
   mutate(title_words = str_c(title, top_words, sep = &quot;: &quot;)) %&gt;% 
   ggplot() + 
-  geom_text(aes(-show_number, -5, label = title_words), size = 5, hjust = 0) + 
+  geom_text(aes(-show_number, -5, label = title_words), size = 3, hjust = 0) + 
   # scale_x_date(date_labels = &quot;%y-%m-%d&quot;) +
   theme(axis.text = element_blank(),
         axis.ticks = element_blank(),
         panel.background = element_blank(),
         plot.title = element_text(hjust = 0.5)) +
+    scale_y_continuous(limits = c(-6, 6)) +
   coord_flip() + 
-  scale_y_continuous(limits = c(-6, 6)) +
-  labs(x = NULL, y = NULL, title = &quot;Episode Title and Unique Words&quot;)+
+  labs(x = NULL, y = NULL, title = &quot;Episode Title and Unique Words&quot;) +
   NULL</code></pre>
-<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-3-1.png" width="624" /></p>
+<p>OK now let’s look at the words that are most unique per episode and most frequently occuring overall</p>
+<p>Hmmm… Bob Dole and Frank Sinatra! Ira has some questions to answer.</p>
 <pre class="r"><code>tt &lt;- tal_tf_idf %&gt;% 
   arrange(-tf_idf) %&gt;% 
   group_by(word) %&gt;% 
@@ -64,10 +83,10 @@ tt %&gt;%
   ggrepel::geom_text_repel(aes(label = word), size = 3) +
   scale_y_log10() +
   theme_cc</code></pre>
-<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
 <div id="how-frequently-is-david-sedaris-on-tal" class="section level3">
 <h3>How frequently is David Sedaris on TAL?</h3>
-<p>David Sedaris is a frequent guest on This American Life, but how frequent?</p>
+<p>Frequent listerns know that David Sedaris is a frequent guest on This American Life. The question is: how frequent? Sometimes it feels like he’s on every 10 episodes. Is this true?</p>
 <p>The chart below shows time between each episode that features David Sedaris.</p>
 <pre class="r"><code>tal %&gt;% filter(str_detect(content, regex(&quot;sedaris&quot;,ignore_case = TRUE))) %&gt;%   tidytext::unnest_tokens(&quot;word&quot;, content) %&gt;% 
   filter(word == &quot;sedaris&quot;) %&gt;% 
@@ -81,5 +100,22 @@ tt %&gt;%
   geom_line() +
   theme_cc +
   labs(title = &quot;Where&#39;s David?&quot;, x = &quot;Show Number&quot;, y = &quot;Days since Last Sedaris Appearance&quot;)</code></pre>
+<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre class="r"><code>tal %&gt;% filter(str_detect(content, regex(&quot;sedaris&quot;,ignore_case = TRUE))) %&gt;%   tidytext::unnest_tokens(&quot;word&quot;, content) %&gt;% 
+  filter(word == &quot;sedaris&quot;) %&gt;% 
+  group_by(show_number, air_date) %&gt;% 
+  count() %&gt;% 
+  ungroup() %&gt;% 
+  arrange(air_date) %&gt;% 
+  mutate(time_between = as.numeric(air_date - lag(air_date))) %&gt;% 
+  group_by(year = lubridate::year(air_date)) %&gt;% 
+  summarise(mean_time_between = mean(time_between, na.rm = TRUE)) %&gt;% 
+  ggplot() + geom_col(aes(year, mean_time_between), alpha = 4/5, 
+                      fill = &quot;cornflowerblue&quot;, 
+                      color = &quot;midnightblue&quot;) +
+  geom_hline(yintercept = 0) + 
+  theme_cc +
+  labs(title = &quot;Average time since last appearance of David Sedaris&quot;, x = NULL, y = &quot;Days&quot;)</code></pre>
 <p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+</div>
 </div>
