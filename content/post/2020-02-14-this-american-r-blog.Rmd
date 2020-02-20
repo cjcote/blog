@@ -127,21 +127,28 @@ tal %>% filter(str_detect(content, regex("sedaris",ignore_case = TRUE))) %>%   t
 
 
 ```{r}
-tal %>% filter(str_detect(content, regex("sedaris",ignore_case = TRUE))) %>%   tidytext::unnest_tokens("word", content) %>% 
-  filter(word == "sedaris") %>% 
-  group_by(show_number, air_date) %>% 
-  count() %>% 
+tal %>% filter(str_detect(content, regex("sedaris",ignore_case = TRUE))) %>%    
+  tidytext::unnest_tokens("word", content) %>% 
+  filter(show_number < 50) %>% 
+  mutate(title = str_replace_all(title, "\\\n", " ") %>% 
+           str_replace(., "Transcript.+Originally aired.+", "")) %>% 
+  anti_join(tidytext::stop_words) %>% 
+  select(title, word) %>% 
+  group_by(title) %>% 
+  count(word, sort = TRUE) %>% 
   ungroup() %>% 
-  arrange(air_date) %>% 
-  mutate(time_between = as.numeric(air_date - lag(air_date))) %>% 
-  group_by(year = lubridate::year(air_date)) %>% 
-  summarise(mean_time_between = mean(time_between, na.rm = TRUE)) %>% 
-  ggplot() + geom_col(aes(year, mean_time_between), alpha = 4/5, 
-                      fill = "cornflowerblue", 
-                      color = "midnightblue") +
-  geom_hline(yintercept = 0) + 
-  theme_cc +
-  labs(title = "Average time since last appearance of David Sedaris", x = NULL, y = "Days")
+  tidytext::bind_tf_idf(word, title, n) %>% 
+  group_by(title) %>% 
+  top_n(10, tf_idf) %>% 
+  ungroup() %>% 
+  mutate(title = str_wrap(title, 30)) %>% 
+  ggplot() + geom_col(aes(fct_reorder(word, tf_idf), tf_idf)) +
+  facet_wrap(~title, scales = "free") +
+  coord_flip() + 
+  theme(legend.position = "none") +
+  theme_cc + 
+  labs(x = NULL,y = NULL, title = "Top words in Episodes featuring David Sedaris")
+  
 ```
 
 

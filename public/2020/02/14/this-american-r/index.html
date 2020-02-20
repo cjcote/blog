@@ -170,21 +170,28 @@ tt %&gt;%
   theme_cc +
   labs(title = &quot;Where&#39;s David?&quot;, x = &quot;Show Number&quot;, y = &quot;Days since Last Sedaris Appearance&quot;)</code></pre>
 <p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
-<pre class="r"><code>tal %&gt;% filter(str_detect(content, regex(&quot;sedaris&quot;,ignore_case = TRUE))) %&gt;%   tidytext::unnest_tokens(&quot;word&quot;, content) %&gt;% 
-  filter(word == &quot;sedaris&quot;) %&gt;% 
-  group_by(show_number, air_date) %&gt;% 
-  count() %&gt;% 
+<pre class="r"><code>tal %&gt;% filter(str_detect(content, regex(&quot;sedaris&quot;,ignore_case = TRUE))) %&gt;%    
+  tidytext::unnest_tokens(&quot;word&quot;, content) %&gt;% 
+  filter(show_number &lt; 50) %&gt;% 
+  mutate(title = str_replace_all(title, &quot;\\\n&quot;, &quot; &quot;) %&gt;% 
+           str_replace(., &quot;Transcript.+Originally aired.+&quot;, &quot;&quot;)) %&gt;% 
+  anti_join(tidytext::stop_words) %&gt;% 
+  select(title, word) %&gt;% 
+  group_by(title) %&gt;% 
+  count(word, sort = TRUE) %&gt;% 
   ungroup() %&gt;% 
-  arrange(air_date) %&gt;% 
-  mutate(time_between = as.numeric(air_date - lag(air_date))) %&gt;% 
-  group_by(year = lubridate::year(air_date)) %&gt;% 
-  summarise(mean_time_between = mean(time_between, na.rm = TRUE)) %&gt;% 
-  ggplot() + geom_col(aes(year, mean_time_between), alpha = 4/5, 
-                      fill = &quot;cornflowerblue&quot;, 
-                      color = &quot;midnightblue&quot;) +
-  geom_hline(yintercept = 0) + 
-  theme_cc +
-  labs(title = &quot;Average time since last appearance of David Sedaris&quot;, x = NULL, y = &quot;Days&quot;)</code></pre>
+  tidytext::bind_tf_idf(word, title, n) %&gt;% 
+  group_by(title) %&gt;% 
+  top_n(10, tf_idf) %&gt;% 
+  ungroup() %&gt;% 
+  mutate(title = str_wrap(title, 30)) %&gt;% 
+  ggplot() + geom_col(aes(fct_reorder(word, tf_idf), tf_idf)) +
+  facet_wrap(~title, scales = &quot;free&quot;) +
+  coord_flip() + 
+  theme(legend.position = &quot;none&quot;) +
+  theme_cc + 
+  labs(x = NULL,y = NULL, title = &quot;Top words in Episodes featuring David Sedaris&quot;)</code></pre>
+<pre><code>## Joining, by = &quot;word&quot;</code></pre>
 <p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
 </div>
 </div>
