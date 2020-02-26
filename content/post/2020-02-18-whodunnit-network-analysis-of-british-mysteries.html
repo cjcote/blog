@@ -13,7 +13,7 @@ tags: []
 <pre class="r"><code>knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 library(tidyverse)</code></pre>
 <pre><code>## Warning: package &#39;tidyverse&#39; was built under R version 3.5.2</code></pre>
-<pre><code>## ── Attaching packages ────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
+<pre><code>## ── Attaching packages ──────────────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
 <pre><code>## ✓ ggplot2 3.2.1     ✓ purrr   0.3.3
 ## ✓ tibble  2.1.3     ✓ dplyr   0.8.4
 ## ✓ tidyr   1.0.2     ✓ stringr 1.4.0
@@ -25,7 +25,7 @@ library(tidyverse)</code></pre>
 <pre><code>## Warning: package &#39;dplyr&#39; was built under R version 3.5.2</code></pre>
 <pre><code>## Warning: package &#39;stringr&#39; was built under R version 3.5.2</code></pre>
 <pre><code>## Warning: package &#39;forcats&#39; was built under R version 3.5.2</code></pre>
-<pre><code>## ── Conflicts ───────────────────────────────────────── tidyverse_conflicts() ──
+<pre><code>## ── Conflicts ─────────────────────────────────────────────────── tidyverse_conflicts() ──
 ## x dplyr::filter() masks stats::filter()
 ## x dplyr::lag()    masks stats::lag()</code></pre>
 <pre class="r"><code>library(tidygraph)</code></pre>
@@ -38,6 +38,16 @@ library(tidyverse)</code></pre>
 <pre class="r"><code>library(ggraph)</code></pre>
 <pre><code>## Warning: package &#39;ggraph&#39; was built under R version 3.5.2</code></pre>
 <pre class="r"><code>library(britishcharacters) #remotes::install_github(&quot;cjcote/britishcharacters)</code></pre>
+<pre class="r"><code>map_episode_color &lt;- function (show_selected, season_selected, episode_selected) 
+{
+    characters %&gt;% dplyr::left_join(characters %&gt;% dplyr::filter(character %in% 
+        (characters %&gt;% dplyr::filter(show == show_selected, 
+            season == season_selected, episode == episode_selected) %&gt;% 
+            dplyr::pull(character))) %&gt;% dplyr::mutate(selected = 1)) %&gt;% 
+        dplyr::filter(selected == 1) %&gt;% tidygraph::as_tbl_graph() %&gt;% 
+        ggraph(layout = &quot;graphopt&quot;) + geom_edge_diagonal() + 
+        geom_node_label(aes(label = name)) + theme_void()
+}</code></pre>
 <pre class="r"><code>characters &lt;- read_csv(&quot;https://raw.githubusercontent.com/cjcote/blog/master/public/characters.csv&quot;)
 
 #or load from package {britishcharacters} characters &lt;- britishcharacters::characters
@@ -57,6 +67,7 @@ characters</code></pre>
 ##  9 Sam Fender     Vera       1       1
 ## 10 Murray Head    Vera       1       1
 ## # … with 9,922 more rows</code></pre>
+<p>What shows are in the dataset?</p>
 <pre class="r"><code>characters %&gt;% distinct(show)</code></pre>
 <pre><code>## # A tibble: 16 x 1
 ##    show            
@@ -77,47 +88,56 @@ characters</code></pre>
 ## 14 Bletchley Circle
 ## 15 Grantchester    
 ## 16 Sherlock</code></pre>
+<p>Nice! Great selection</p>
+<p>Let’s take a look at who is in the first episode of Foyle’s War using <code>episode_search</code></p>
 <pre class="r"><code>britishcharacters::episode_search(show_select = &quot;Foyles War&quot;,season_select = 1, episode_select = 1)</code></pre>
-<p><img src="/post/2020-02-18-whodunnit-network-analysis-of-british-mysteries_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
-<p>Find the most characters in the most number of episodes</p>
-<pre class="r"><code>characters %&gt;% 
+<p><img src="/post/2020-02-18-whodunnit-network-analysis-of-british-mysteries_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>These charaters seem to be mostly separate from the rest of the shows. Dominic Mafham has been in Midsomer Murders as well, it appears.</p>
+<p>What shows are the</p>
+<p>Of the characters who appear most frequently, what show are they most known for?</p>
+<pre class="r"><code>top_char &lt;- characters %&gt;% 
   count(character, sort = TRUE) %&gt;% 
-  slice(1:15)</code></pre>
-<pre><code>## # A tibble: 15 x 2
-##    character         n
-##    &lt;chr&gt;         &lt;int&gt;
-##  1 Mark Williams    82
-##  2 Jane Wymark      81
-##  3 John Nettles     81
-##  4 Sorcha Cusack    81
-##  5 Barry Jackson    75
-##  6 Ian McNeice      75
-##  7 Martin Clunes    71
-##  8 Caroline Catz    70
-##  9 Joe Absolom      66
-## 10 David Tennant    64
-## 11 John Burton      61
-## 12 John Marquez     55
-## 13 Jason Hughes     53
-## 14 Selina Cadell    53
-## 15 Nancy Carroll    49</code></pre>
-<pre class="r"><code>characters %&gt;% 
-  count(character, sort = TRUE) %&gt;% 
-  slice(1:15) %&gt;% 
-  ggplot() + geom_col(aes(fct_reorder(character, n), n), fill = &quot;cornflowerblue&quot;)+
+  slice(1:20)  
+
+characters %&gt;%
+  filter(character %in% unique(top_char$character)) %&gt;% 
+  group_by(character) %&gt;% 
+  count(show, sort = TRUE) %&gt;% 
+  slice(1) %&gt;% 
+  ungroup() %&gt;% 
+  ggplot() + geom_col(aes(fct_reorder(character, n), n, fill = show)) +
+  labs(x = NULL, y = &quot;episodes&quot;) + 
   coord_flip() +
   theme(panel.background = element_blank(),
         plot.background = element_blank(),
         panel.grid = element_line(color = &quot;gray90&quot;))</code></pre>
-<p><img src="/post/2020-02-18-whodunnit-network-analysis-of-british-mysteries_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
-<pre class="r"><code>britishcharacters::map_character(&quot;Mark Williams&quot;)</code></pre>
-<p><img src="/post/2020-02-18-whodunnit-network-analysis-of-british-mysteries_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p><img src="/post/2020-02-18-whodunnit-network-analysis-of-british-mysteries_files/figure-html/unnamed-chunk-5-1.png" width="672" />
+At the top of our list are main characters of shows with many episodes. Makes sense.</p>
+<p>John Nettles and Jane Wymark are the Detective Chief Inspector and his wife in Midsomer Murders.</p>
+<p>Mark Williams <em>is</em> Father Brown and Sorcha Cusack is ..</p>
+<p>Further down the list we have characters from Doc Martin, including Selina Cadell. Let’s take a look at what shows she has been in.</p>
+<pre class="r"><code>map_character(&quot;Selina Cadell&quot;) +
+  coord_cartesian(clip = &quot;on&quot;)</code></pre>
+<p><img src="/post/2020-02-18-whodunnit-network-analysis-of-british-mysteries_files/figure-html/unnamed-chunk-6-1.png" width="576" />
+Many shows! We continue to notice Selina pop again and again in our favorite shows. From my memory, her most memorable and long running role is probably in Doc Martin. Is this true?</p>
+<pre class="r"><code>characters %&gt;% 
+  filter(character == &quot;Selina Cadell&quot;) %&gt;% 
+  count(show, sort = TRUE)</code></pre>
+<pre><code>## # A tibble: 4 x 2
+##   show                 n
+##   &lt;chr&gt;            &lt;int&gt;
+## 1 Doc Martin          49
+## 2 Midsomer Murders     2
+## 3 Father Brown         1
+## 4 Foyles War           1</code></pre>
+<p>Yes, definitely in Doc Martin most frequently. Impressive that she has been in more than one episode of Midsomer though!</p>
 <p>What episode has the most people?</p>
 <pre class="r"><code>characters %&gt;% 
   group_by(show, season, episode) %&gt;% 
-  count(sort = TRUE)</code></pre>
+  summarise(n = n()) %&gt;% 
+  ungroup() %&gt;% 
+  arrange(-n)</code></pre>
 <pre><code>## # A tibble: 601 x 4
-## # Groups:   show, season, episode [601]
 ##    show             season episode     n
 ##    &lt;chr&gt;             &lt;dbl&gt;   &lt;dbl&gt; &lt;int&gt;
 ##  1 Midsomer Murders      1       2   165
@@ -131,6 +151,44 @@ characters</code></pre>
 ##  9 Dr Who                1       1    48
 ## 10 Dr Who                1       4    47
 ## # … with 591 more rows</code></pre>
+<p>Could there really be 165 characters in the second episode of Midsomer?</p>
+<pre class="r"><code>characters %&gt;% filter(show == &quot;Midsomer Murders&quot;, season == 1, episode == 2) </code></pre>
+<pre><code>## # A tibble: 165 x 4
+##    character       show             season episode
+##    &lt;chr&gt;           &lt;chr&gt;             &lt;dbl&gt;   &lt;dbl&gt;
+##  1 John Nettles    Midsomer Murders      1       2
+##  2 Daniel Casey    Midsomer Murders      1       2
+##  3 Jane Wymark     Midsomer Murders      1       2
+##  4 Laura Howard    Midsomer Murders      1       2
+##  5 Barry Jackson   Midsomer Murders      1       2
+##  6 Anna Massey     Midsomer Murders      1       2
+##  7 Joanna David    Midsomer Murders      1       2
+##  8 David Troughton Midsomer Murders      1       2
+##  9 John Shrapnel   Midsomer Murders      1       2
+## 10 Jane Booker     Midsomer Murders      1       2
+## # … with 155 more rows</code></pre>
 <p>Graph it!</p>
-<pre class="r"><code>britishcharacters::map_episode(&quot;Midsomer Murders&quot;, season = 1, episode_selected = 2)</code></pre>
-<p><img src="/post/2020-02-18-whodunnit-network-analysis-of-british-mysteries_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<pre class="r"><code>britishcharacters::map_episode(&quot;Midsomer Murders&quot;, season_selected = 1, episode_selected = 2) </code></pre>
+<p><img src="/post/2020-02-18-whodunnit-network-analysis-of-british-mysteries_files/figure-html/unnamed-chunk-10-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p>Yikes! That’s a little messy. Too many characters to see that way.</p>
+<p>Let’s check out Broadchurch instead</p>
+<pre class="r"><code>britishcharacters::map_episode(&quot;Broadchurch&quot;, season_select = 2, episode_select = 1)</code></pre>
+<p><img src="/post/2020-02-18-whodunnit-network-analysis-of-british-mysteries_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>Phoebe Waller-Bridge! What else has she been in besides Fleabag? (A show sadly omitted from this dataset…)</p>
+<pre class="r"><code>characters %&gt;% filter(character == &quot;Phoebe Waller-Bridge&quot;) %&gt;% 
+  distinct(show)</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   show       
+##   &lt;chr&gt;      
+## 1 Broadchurch</code></pre>
+<p>OK just Broadchurch. Not as exciting as hoped.</p>
+<p>How many seasons and episodes was she in?</p>
+<pre class="r"><code>characters %&gt;% 
+  filter(show == &quot;Broadchurch&quot;) %&gt;% 
+  group_by(show, season, episode) %&gt;% 
+  mutate(character = paste(character, collapse = &quot;|&quot;)) %&gt;% 
+  distinct() %&gt;% 
+  mutate(pwb = ifelse(str_detect(character, &quot;Phoebe Waller-Bridge&quot;), 1, 0)) %&gt;% 
+   ggplot() + geom_col(aes(episode, 1, fill = factor(pwb))) + facet_wrap(~season)</code></pre>
+<p><img src="/post/2020-02-18-whodunnit-network-analysis-of-british-mysteries_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>A recurring role in season 2. I must have watched Broadchurch before Fleabag appeared.</p>

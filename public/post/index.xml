@@ -6,10 +6,20 @@
     <description>Recent content in Posts on Chris Cote&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 18 Feb 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 22 Feb 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>John Ross in WWII</title>
+      <link>/2020/02/22/john-ross-in-wwii/</link>
+      <pubDate>Sat, 22 Feb 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/2020/02/22/john-ross-in-wwii/</guid>
+      <description>library(tidyverse) create point data frame
+jr_points &amp;lt;- read_csv(&amp;quot;~/Documents/HKS/rtutorial/data/johnross/jr_raw.csv&amp;quot;) %&amp;gt;% mutate(year = str_extract(`Date Arrived`, &amp;quot;-4[0-9]&amp;quot;) %&amp;gt;% str_replace(., &amp;quot;-&amp;quot;, &amp;quot;&amp;quot;), month = str_extract(`Date Arrived`, &amp;quot;[A-Z][a-z][a-z]&amp;quot;) %&amp;gt;% str_replace_all(., &amp;quot;-&amp;quot;, &amp;quot;&amp;quot;), day = str_extract(`Date Arrived`, &amp;quot;^[0-9]([0-9])?&amp;quot;), year = ifelse(is.na(year), lag(year), year), date = paste0(&amp;quot;19&amp;quot;,year,&amp;quot;-&amp;quot;, month,&amp;quot;-&amp;quot;, day) %&amp;gt;% as.Date(&amp;quot;%Y-%b-%d&amp;quot;)) %&amp;gt;% filter(!is.na(Lat)) %&amp;gt;% select(date, year, month, day, everything()) %&amp;gt;% mutate(index = 1:n()) %&amp;gt;% set_names(str_replace(str_to_lower(names(.)), &amp;quot; &amp;quot;, &amp;quot;_&amp;quot;)) %&amp;gt;% mutate(date_arrived = as.Date(paste0(&amp;quot;19&amp;quot;, year, &amp;quot;-&amp;quot;, month, &amp;quot;-&amp;quot;, day), format = &amp;quot;%Y-%b-%d&amp;quot;)) %&amp;gt;% arrange(date_arrived) %&amp;gt;% mutate(date_left = lead(date_arrived)) %&amp;gt;% mutate(location = paste(location_1, location_2, location_3, sep = &amp;quot;, &amp;quot;)) %&amp;gt;% select(date_arrived, date_left, location, what, lat, lon) %&amp;gt;% mutate(new_location = ifelse(location == lag(location), 0 , 1), new_location = ifelse(row_number() == 1, 0, new_location), new_location = cumsum(new_location)) %&amp;gt;% group_by(new_location) %&amp;gt;% fill(what) %&amp;gt;% ungroup() %&amp;gt;% distinct(new_location, .</description>
+    </item>
     
     <item>
       <title>Whodunnit? Network Analysis of British Mysteries</title>
@@ -17,7 +27,7 @@
       <pubDate>Tue, 18 Feb 2020 00:00:00 +0000</pubDate>
       
       <guid>/2020/02/18/whodunnit-network-analysis-of-british-mysteries/</guid>
-      <description>knitr::opts_chunk$set(message = FALSE, warning = FALSE) library(tidyverse) ## Warning: package &amp;#39;tidyverse&amp;#39; was built under R version 3.5.2 ## ── Attaching packages ────────────────────────────────────── tidyverse 1.3.0 ── ## ✓ ggplot2 3.2.1 ✓ purrr 0.3.3 ## ✓ tibble 2.1.3 ✓ dplyr 0.8.4 ## ✓ tidyr 1.0.2 ✓ stringr 1.4.0 ## ✓ readr 1.3.1 ✓ forcats 0.4.0 ## Warning: package &amp;#39;ggplot2&amp;#39; was built under R version 3.5.2 ## Warning: package &amp;#39;tibble&amp;#39; was built under R version 3.</description>
+      <description>knitr::opts_chunk$set(message = FALSE, warning = FALSE) library(tidyverse) ## Warning: package &amp;#39;tidyverse&amp;#39; was built under R version 3.5.2 ## ── Attaching packages ──────────────────────────────────────────────── tidyverse 1.3.0 ── ## ✓ ggplot2 3.2.1 ✓ purrr 0.3.3 ## ✓ tibble 2.1.3 ✓ dplyr 0.8.4 ## ✓ tidyr 1.0.2 ✓ stringr 1.4.0 ## ✓ readr 1.3.1 ✓ forcats 0.4.0 ## Warning: package &amp;#39;ggplot2&amp;#39; was built under R version 3.5.2 ## Warning: package &amp;#39;tibble&amp;#39; was built under R version 3.</description>
     </item>
     
     <item>
