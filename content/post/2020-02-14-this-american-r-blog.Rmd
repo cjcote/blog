@@ -126,7 +126,7 @@ tal %>% filter(str_detect(content, regex("sedaris",ignore_case = TRUE))) %>%   t
 ```
 
 
-```{r}
+```{r, fig.align = "center", fig.width= 6, fig.height = 4}
 tal %>% filter(str_detect(content, regex("sedaris",ignore_case = TRUE))) %>%    
   tidytext::unnest_tokens("word", content) %>% 
   filter(show_number < 50) %>% 
@@ -142,12 +142,13 @@ tal %>% filter(str_detect(content, regex("sedaris",ignore_case = TRUE))) %>%
   top_n(10, tf_idf) %>% 
   ungroup() %>% 
   mutate(title = str_wrap(title, 30)) %>% 
-  ggplot() + geom_col(aes(fct_reorder(word, tf_idf), tf_idf)) +
-  facet_wrap(~title, scales = "free") +
+  ggplot() + geom_col(aes(fct_reorder(word, tf_idf), tf_idf,  fill = word), show.legend = FALSE) +
+  facet_wrap(~title, scales = "free_y") +
   coord_flip() + 
   theme(legend.position = "none") +
   theme_cc + 
-  labs(x = NULL,y = NULL, title = "Top words in Episodes featuring David Sedaris")
+  labs(x = NULL,y = NULL, title = "Top words in Episodes featuring David Sedaris") +
+  theme(strip.background = element_blank())
   
 ```
 

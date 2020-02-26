@@ -1,0 +1,186 @@
+---
+title: "John Ross in WWII"
+author: "Chris Cote"
+date: '2020-02-22'
+output:
+  html_document: 
+    fig_height: 6
+    fig_width: 9
+slug: john-ross-in-wwii
+tags: []
+categories: spatial
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+library(tidyverse)
+
+```
+
+create point data frame
+```{r message=FALSE, warning=FALSE}
+
+jr_points <- read_csv("~/Documents/HKS/rtutorial/data/johnross/jr_raw.csv") %>% 
+  mutate(year = str_extract(`Date Arrived`, "-4[0-9]") %>% str_replace(., "-", ""),
+         month = str_extract(`Date Arrived`, "[A-Z][a-z][a-z]") %>% str_replace_all(., "-", ""),
+         day = str_extract(`Date Arrived`, "^[0-9]([0-9])?"),
+         year = ifelse(is.na(year), lag(year), year),
+         date = paste0("19",year,"-", month,"-", day) %>% as.Date("%Y-%b-%d")) %>% 
+  filter(!is.na(Lat)) %>%
+  select(date, year, month, day, everything()) %>% 
+  mutate(index = 1:n()) %>% 
+  set_names(str_replace(str_to_lower(names(.)), " ", "_")) %>% 
+  mutate(date_arrived = as.Date(paste0("19", year, "-", month, "-", day), format = "%Y-%b-%d")) %>% 
+  arrange(date_arrived) %>% 
+  mutate(date_left = lead(date_arrived)) %>% 
+  mutate(location = paste(location_1, location_2, location_3, sep = ", ")) %>% 
+  select(date_arrived, date_left, location, what, lat, lon) %>% 
+  mutate(new_location = ifelse(location == lag(location), 0 , 1),
+         new_location = ifelse(row_number() == 1, 0, new_location),
+         new_location = cumsum(new_location)) %>% 
+  group_by(new_location) %>% 
+  fill(what) %>% 
+  ungroup() %>% 
+  distinct(new_location, .keep_all = TRUE) %>% 
+  mutate(date_left = lead(date_arrived)) %>% 
+  mutate(country = ifelse(str_detect(location, "Italy"), "Italy", 
+                          ifelse(str_detect(location, "USA"), "USA", "NA")),
+         lead_country = lead(country),
+         lead_country = ifelse(is.na(date_left), "USA", lead_country),
+         map = paste0(country, lead_country), 
+         map2 = ifelse(map == lag(map), 0, 1),
+         map2 = ifelse(is.na(map2), 1, map2)) %>%  
+  group_by(map) %>% 
+  mutate(map2 = cumsum(map2)) %>% 
+  ungroup() %>% 
+  mutate(map = paste0(map,map2))
+
+```
+
+```{r}
+jr_points
+```
+
+
+```{r}
+jr_labels <- 
+   jr_points %>% distinct(date_arrived, date_left, location, lat, lon, map) %>% 
+   mutate(label = paste0(location, ": ",  scales::date_format("%b-%d-%y")(date_arrived), " to ", scales::date_format("%b-%d-%y")(date_left))) %>% 
+   mutate(label = str_replace(label, ", NA", "")) %>% 
+   mutate(country = ifelse(str_detect(location, "Italy"), "Italy", 
+                           ifelse(str_detect(location, "USA"), "USA", "NA")),
+          lead_country = lead(country),
+          lead_country = ifelse(is.na(date_left), "USA", lead_country)) %>% 
+   mutate(duration = as.numeric(date_left - date_arrived)) %>% 
+   group_by(location) %>% 
+   mutate(duration = sum(duration, na.rm = TRUE)) %>% 
+   ungroup()
+
+jr_labels
+```
+
+Create long function to make map plot
+```{r}
+make_map <- function(choose_map) {
+ jr_labels <- 
+   jr_points %>% distinct(date_arrived, date_left, location, lat, lon, map) %>% 
+   mutate(label = paste0(location, ": ",  scales::date_format("%b-%d-%y")(date_arrived), " to ", scales::date_format("%b-%d-%y")(date_left))) %>% 
+   mutate(label = str_replace(label, ", NA", "")) %>% 
+   mutate(country = ifelse(str_detect(location, "Italy"), "Italy", 
+                           ifelse(str_detect(location, "USA"), "USA", "NA")),
+          lead_country = lead(country),
+          lead_country = ifelse(is.na(date_left), "USA", lead_country),
+          map = factor(paste0(country, lead_country))) %>% 
+   mutate(duration = as.numeric(date_left - date_arrived)) %>% 
+   group_by(location) %>% 
+   mutate(duration = sum(duration, na.rm = TRUE)) %>% 
+   ungroup() %>% 
+   mutate(duration = (scale(duration) + 3)^5)
+  if(missing(choose_map)){
+    
+    choose_map <-""
+
+    
+  }else{
+    jr_points <- jr_points %>% 
+    filter(str_detect(map, choose_map))
+  jr_labels <- jr_labels %>% 
+    filter(str_detect(map, choose_map)) }
+ 
+
+  
+  if(!missing(choose_map) & choose_map == "USAUSA"){
+    map_usa <- ggplot2::map_data("state")
+ggplot(jr_points) + 
+    geom_map(data = map_usa, map = map_usa, aes(map_id = region), 
+             fill = "gray90", alpha = 1/2,
+             color = "gray50") + 
+    geom_curve(data = jr_points %>% 
+                 mutate(alternate = rep_along(date_arrived, 1:2),
+                        alternate = factor(alternate)),
+               aes(x = lon, xend = lead(lon), y = lat, yend = lead(lat), lty = alternate),
+               arrow = arrow(length = unit(0.2, "inches"), type = "closed"), show.legend = FALSE) +
+    geom_point(data = jr_labels,  
+               aes(x = lon, y = lat, color = location, size =  duration), show.legend = FALSE) +
+    ggrepel::geom_label_repel(data = jr_labels %>% 
+                               mutate(number = row_number(),
+                                      number_location = paste0(number, ": ", str_replace_all(label, ", USA|, Italy", ""))) %>% 
+                               group_by(location) %>% 
+                               mutate(number_location = paste(number_location, collapse = "\\\n")) %>% 
+                               distinct(number_location, lat, lon), 
+                             aes(x = lon, y = lat, label = number_location), size = 2.7, show.legend = FALSE) +
+    coord_equal() + 
+    theme_void()
+  }else {
+    world <- ggplot2::map_data("world")
+    ggplot(jr_points) + 
+      geom_map(data = world, map = world, aes(map_id = region), 
+               fill = "gray90", alpha = 1/2,
+               color = "gray50") + 
+      geom_curve(data = jr_points %>% 
+                   mutate(alternate = rep_along(date_arrived, 1:2),
+                          alternate = factor(alternate)),
+                 aes(x = lon, xend = lead(lon), y = lat, yend = lead(lat), lty = alternate),
+                 arrow = arrow(angle = 120, length = unit(0.1, "inches"), type = "closed"), show.legend = FALSE) +
+      geom_point(data = jr_labels, 
+                 aes(x = lon, y = lat, color = location, size = log(duration)),  show.legend = FALSE) +
+      ggrepel::geom_label_repel(data = jr_labels %>%
+                                 mutate(number = row_number(),
+                                        number_location = paste0(number, ": ", str_replace_all(label, ", USA|, Italy", ""))) %>%
+                                 group_by(location) %>%
+                                 mutate(number_location = paste(number_location, collapse = "\\\n")) %>%
+                                 distinct(number_location, lat, lon),
+                               aes(x = lon, y = lat, label = number_location), size = 3, show.legend = FALSE) +
+      coord_equal() + 
+      theme_void() +
+      theme(panel.background = element_rect(fill = "NA")) 
+  } 
+  
+}
+
+```
+
+
+use the function!
+
+```{r}
+make_map()
+
+```
+
+Service in USA 
+```{r fig.align="center", fig.height=6, fig.width=9, message=FALSE, warning=FALSE}
+
+make_map("USAUSA")
+
+```
+
+
+Service in Italy
+
+```{r fig.align="center", fig.height=6, fig.width=9, message=FALSE, warning=FALSE}
+
+make_map("ItalyItaly")
+
+```
+
+

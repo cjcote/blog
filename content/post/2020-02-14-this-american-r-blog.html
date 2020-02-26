@@ -116,13 +116,14 @@ tt %&gt;%
   top_n(10, tf_idf) %&gt;% 
   ungroup() %&gt;% 
   mutate(title = str_wrap(title, 30)) %&gt;% 
-  ggplot() + geom_col(aes(fct_reorder(word, tf_idf), tf_idf)) +
-  facet_wrap(~title, scales = &quot;free&quot;) +
+  ggplot() + geom_col(aes(fct_reorder(word, tf_idf), tf_idf,  fill = word), show.legend = FALSE) +
+  facet_wrap(~title, scales = &quot;free_y&quot;) +
   coord_flip() + 
   theme(legend.position = &quot;none&quot;) +
   theme_cc + 
-  labs(x = NULL,y = NULL, title = &quot;Top words in Episodes featuring David Sedaris&quot;)</code></pre>
+  labs(x = NULL,y = NULL, title = &quot;Top words in Episodes featuring David Sedaris&quot;) +
+  theme(strip.background = element_blank())</code></pre>
 <pre><code>## Joining, by = &quot;word&quot;</code></pre>
-<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-6-1.png" width="576" style="display: block; margin: auto;" /></p>
 </div>
 </div>

@@ -16,6 +16,21 @@ library(ggraph)
 library(britishcharacters) #remotes::install_github("cjcote/britishcharacters)
 ```
 
+
+```{r}
+map_episode_color <- function (show_selected, season_selected, episode_selected) 
+{
+    characters %>% dplyr::left_join(characters %>% dplyr::filter(character %in% 
+        (characters %>% dplyr::filter(show == show_selected, 
+            season == season_selected, episode == episode_selected) %>% 
+            dplyr::pull(character))) %>% dplyr::mutate(selected = 1)) %>% 
+        dplyr::filter(selected == 1) %>% tidygraph::as_tbl_graph() %>% 
+        ggraph(layout = "graphopt") + geom_edge_diagonal() + 
+        geom_node_label(aes(label = name)) + theme_void()
+}
+```
+
+
 ```{r}
 characters <- read_csv("https://raw.githubusercontent.com/cjcote/blog/master/public/characters.csv")
 
@@ -23,49 +38,136 @@ characters <- read_csv("https://raw.githubusercontent.com/cjcote/blog/master/pub
 
 characters
 ```
+
+What shows are in the dataset?
+
 ```{r}
 characters %>% distinct(show)
+```
+
+Nice! Great selection
+
+
+Let's take a look at who is in the first episode of Foyle's War using `episode_search`
+```{r}
+
 britishcharacters::episode_search(show_select = "Foyles War",season_select = 1, episode_select = 1)
 
 ```
 
-Find the most characters in the most number of episodes
-```{r}
-characters %>% 
-  count(character, sort = TRUE) %>% 
-  slice(1:15)
-```
+These charaters seem to be mostly separate from the rest of the shows. Dominic Mafham has been in Midsomer Murders as well, it appears.
 
+
+
+
+
+
+
+
+
+What shows are the 
+
+Of the characters who appear most frequently, what show are they most known for?
 ```{r}
-characters %>% 
+
+
+top_char <- characters %>% 
   count(character, sort = TRUE) %>% 
-  slice(1:15) %>% 
-  ggplot() + geom_col(aes(fct_reorder(character, n), n), fill = "cornflowerblue")+
+  slice(1:20)  
+
+characters %>%
+  filter(character %in% unique(top_char$character)) %>% 
+  group_by(character) %>% 
+  count(show, sort = TRUE) %>% 
+  slice(1) %>% 
+  ungroup() %>% 
+  ggplot() + geom_col(aes(fct_reorder(character, n), n, fill = show)) +
+  labs(x = NULL, y = "episodes") + 
   coord_flip() +
   theme(panel.background = element_blank(),
         plot.background = element_blank(),
         panel.grid = element_line(color = "gray90"))
 ```
+At the top of our list are main characters of shows with many episodes. Makes sense.
 
-```{r}
+John Nettles and Jane Wymark are the Detective Chief Inspector and his wife in Midsomer Murders. 
 
-britishcharacters::map_character("Mark Williams")
+Mark Williams *is* Father Brown and Sorcha Cusack is ..
+
+Further down the list we have characters from Doc Martin, including Selina Cadell. Let's take a look at what shows she has been in.
+
+
+```{r, fig.height= 4, fig.width = 6}
+
+map_character("Selina Cadell") +
+  coord_cartesian(clip = "on")
 
 ```
+Many shows! We continue to notice Selina pop again and again in our favorite shows. From my memory, her most memorable and long running role is probably in Doc Martin. Is this true?
 
+
+```{r}
+characters %>% 
+  filter(character == "Selina Cadell") %>% 
+  count(show, sort = TRUE)
+```
+Yes, definitely in Doc Martin most frequently. Impressive that she has been in more than one episode of Midsomer though!
 
 What episode has the most people?
 ```{r}
 characters %>% 
   group_by(show, season, episode) %>% 
-  count(sort = TRUE)
+  summarise(n = n()) %>% 
+  ungroup() %>% 
+  arrange(-n)
 ```
+
+Could there really be 165 characters in the second episode of Midsomer?
+
+```{r}
+characters %>% filter(show == "Midsomer Murders", season == 1, episode == 2) 
+```
+
+
 
 Graph it!
-```{r}
+```{r, fig.align="center", fig.height=4, fig.width = 6}
 
-britishcharacters::map_episode("Midsomer Murders", season = 1, episode_selected = 2)
+britishcharacters::map_episode("Midsomer Murders", season_selected = 1, episode_selected = 2) 
 
 
 ```
 
+Yikes! That's a little messy. Too many characters to see that way. 
+
+
+Let's check out Broadchurch instead
+```{r}
+britishcharacters::map_episode("Broadchurch", season_select = 2, episode_select = 1)
+
+```
+
+Phoebe Waller-Bridge! What else has she been in besides Fleabag? (A show sadly omitted from this dataset...)
+
+```{r}
+
+characters %>% filter(character == "Phoebe Waller-Bridge") %>% 
+  distinct(show)
+
+```
+
+OK just Broadchurch. Not as exciting as hoped.
+
+How many seasons and episodes was she in?
+
+```{r}
+characters %>% 
+  filter(show == "Broadchurch") %>% 
+  group_by(show, season, episode) %>% 
+  mutate(character = paste(character, collapse = "|")) %>% 
+  distinct() %>% 
+  mutate(pwb = ifelse(str_detect(character, "Phoebe Waller-Bridge"), 1, 0)) %>% 
+   ggplot() + geom_col(aes(episode, 1, fill = factor(pwb))) + facet_wrap(~season)
+```
+
+A recurring role in season 2. I must have watched Broadchurch before Fleabag appeared.
