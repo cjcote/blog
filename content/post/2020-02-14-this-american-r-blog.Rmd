@@ -11,18 +11,21 @@ I love This American Life. I thought it would be a fun corpus to look at and do 
 
 ## Setup
 Load tidyverse, set theme, read in local file...
-```{r setup, message = FALSE, warning = FALSE, echo = TRUE, cache = TRUE}
+```{r setup, message = FALSE, warning = FALSE, echo = TRUE}
 library(tidyverse)
+```
 
+```{r}
 theme_cc <- theme(panel.grid = element_line(color = "gray90"),
         panel.background = element_blank(),
         plot.background = element_blank(),
         plot.title = element_text(hjust = 0.5))
+```
 
+```{r, cache = TRUE}
 tal <- read_csv("~/Documents/HKS/rtutorial/data/this_american_life/tal_complete.csv")
 
 ```
-
 
 ## Cleaning
 Do some preliminary cleaning, taking out carriage return characters, getting rid of stopwords -- all on first 100 episodes only
@@ -107,7 +110,8 @@ tt %>%
 
 
 ![](/post/2020-02-14-this-american-r-blog_files/sedaris.png)
-Frequent listerns know that David Sedaris is a frequent guest on This American Life. The question is: how frequent? Sometimes it feels like he's on every 10 episodes. Is this true?
+
+Frequent listeners know that David Sedaris is a frequent guest on This American Life. The question is: how frequent? Sometimes it feels like he's on every 10 episodes. Is this true?
 
 
 
