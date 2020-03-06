@@ -13,7 +13,8 @@ tags: []
 <h2>This post is a quick look at new data from NREL: “Electrification Futures Study Load Profiles”</h2>
 <p>The website describes the datasets:</p>
 <p>This data set includes hourly load profiles developed for the Electrification Futures Study (EFS). The load profiles represent projected end-use electricity demand for various scenarios of electrification (Reference, Medium, High) and technology advancement (Slow, Moderate, Rapid), developed using the EnergyPATHWAYS (EP) model, as described in Mai et al. (2018). The EP load profiles were further calibrated for use in the ReEDS capacity expansion model (detailed in forthcoming EFS analyses), thus numerical values in this data set differ slightly from those reported in Mai et al. (2018). Load profiles are provided for a subset of years (2018, 2020, 2024, 2030, 2040, 2050) and are aggregated to the state, sector, and select subsector level.</p>
-<pre class="r"><code>library(tidyverse)</code></pre>
+<pre class="r"><code>knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+library(tidyverse)</code></pre>
 <pre><code>## Warning: package &#39;tidyverse&#39; was built under R version 3.5.2</code></pre>
 <pre><code>## ── Attaching packages ────────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
 <pre><code>## ✓ ggplot2 3.2.1     ✓ purrr   0.3.3
@@ -37,6 +38,7 @@ tags: []
 #just &quot;unzip filename&quot;
 
 efs &lt;- data.table::fread(&quot;~/Downloads/EFSLoadProfile_Reference_Moderate.csv&quot;)</code></pre>
+<p>How does demand for electric-charging vehicles change by decade over the first 100 hours of each year… (not so helpful but fun looking)</p>
 <pre class="r"><code>efs %&gt;% as_tibble() %&gt;% 
   filter(State == &quot;MA&quot;) %&gt;% 
   filter(Sector == &quot;Transportation&quot;) %&gt;% 
@@ -45,7 +47,10 @@ efs &lt;- data.table::fread(&quot;~/Downloads/EFSLoadProfile_Reference_Moderate.
   filter(LocalHourID &lt; 100) %&gt;% 
   mutate(sector_subsector = paste0(Sector, &quot; &quot;, Subsector)) %&gt;% 
   ggplot() + geom_line(aes(LocalHourID, LoadMW, color = factor(Year))) +
-  facet_wrap(~sector_subsector)</code></pre>
+  facet_wrap(~sector_subsector) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = &quot;gray90&quot;))</code></pre>
 <p><img src="/post/2020-03-05-nrel-load-shapes_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
 <pre class="r"><code>annual_growth &lt;- efs %&gt;% as_tibble() %&gt;% 
   filter(Sector == &quot;Transportation&quot;) %&gt;% 
@@ -62,7 +67,6 @@ annual_growth %&gt;%
   theme(plot.background = element_blank(),
         panel.background = element_blank(),
         panel.grid = element_line(color = &quot;gray90&quot;))</code></pre>
-<pre><code>## Warning: Removed 6 rows containing missing values (geom_path).</code></pre>
 <p><img src="/post/2020-03-05-nrel-load-shapes_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
 <pre class="r"><code>ma_sector &lt;- efs %&gt;% as_tibble() %&gt;% 
   filter(State == &quot;MA&quot;) %&gt;% 
@@ -85,6 +89,7 @@ ma_sector</code></pre>
 ##  9 Commercial  2018           9  2057.
 ## 10 Commercial  2018          10  2123.
 ## # … with 210,230 more rows</code></pre>
+<p>The commercial sector has the largest seasonal peak and uses the most electricity overall.</p>
 <pre class="r"><code>ma_sector %&gt;% 
   group_by(Year, Sector) %&gt;% 
     mutate(day = rep(1:(length(unique(ma_sector$LocalHourID))/24), each = 24)) %&gt;% 
@@ -126,9 +131,12 @@ ma_sector_hour %&gt;%
             min = min(LoadMW), 
             daily_range = (max - min)) %&gt;% 
   ungroup() %&gt;% 
-  ggplot() + geom_line(aes(day, daily_range, color = factor(Year)))</code></pre>
+  ggplot() + geom_line(aes(day, daily_range, color = factor(Year))) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = &quot;gray90&quot;))</code></pre>
 <p><img src="/post/2020-03-05-nrel-load-shapes_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
-<p>Not much!</p>
+<p>Not much variation to see from this point of view!</p>
 <p>Let’s try it in an annual plot</p>
 <pre class="r"><code>ma_sector_hour %&gt;% 
   summarise(max = max(LoadMW),
@@ -136,17 +144,23 @@ ma_sector_hour %&gt;%
             daily_range = (max - min)) %&gt;% 
   group_by(Year) %&gt;% 
   summarise(daily_range = mean(daily_range)) %&gt;% #this part changes
-  ggplot() + geom_col(aes(Year, daily_range, fill = factor(Year)))</code></pre>
+  ggplot() + geom_col(aes(Year, daily_range, fill = factor(Year))) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = &quot;gray90&quot;))</code></pre>
 <p><img src="/post/2020-03-05-nrel-load-shapes_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
 <p>Or since what we’re really trying to do here is find the standard deviation, let’s just check that per day</p>
 <pre class="r"><code>ma_sector_hour %&gt;% 
   summarise(sd = sd(LoadMW)) %&gt;% 
   group_by(Year) %&gt;% 
   summarise(sd = mean(sd)) %&gt;% #this part changes
-  ggplot() + geom_col(aes(Year, sd, fill = factor(Year)))</code></pre>
+  ggplot() + geom_col(aes(Year, sd, fill = factor(Year))) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = &quot;gray90&quot;))</code></pre>
 <p><img src="/post/2020-03-05-nrel-load-shapes_files/figure-html/unnamed-chunk-8-1.png" width="672" />
 Same plot, just with different units.</p>
-<p>Do the load peaks and nadirs the same over time?</p>
+<p>Do the load peaks and nadirs stay the same over time?</p>
 <pre class="r"><code>ma_sector_hour %&gt;% 
   summarise(max = max(LoadMW),
             min = min(LoadMW), 
@@ -160,9 +174,10 @@ Same plot, just with different units.</p>
   ungroup() %&gt;% 
   ggplot() + geom_ribbon(aes(day, ymin = min_hour, ymax = max_hour), 
                          fill = &quot;lightblue&quot;, alpha = 3/4) + 
-  facet_wrap(~Year)</code></pre>
-<pre><code>## Adding missing grouping variables: `day`, `Year`
-## Adding missing grouping variables: `day`, `Year`</code></pre>
+  facet_wrap(~Year) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = &quot;gray90&quot;))</code></pre>
 <p><img src="/post/2020-03-05-nrel-load-shapes_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
 <p>Ok this is pretty unhelpful. We can see how the load shape changes over the year, but it’s pretty difficult to see whether there’s any variation across years.</p>
 <p>Let’s look at just one year, since we’re here.</p>
@@ -179,11 +194,12 @@ Same plot, just with different units.</p>
   ungroup() %&gt;% 
   filter(Year == 2018) %&gt;% 
   ggplot() + geom_ribbon(aes(day, ymin = min_hour, ymax = max_hour), 
-                         fill = &quot;lightblue&quot;, alpha = 3/4)</code></pre>
-<pre><code>## Adding missing grouping variables: `day`, `Year`
-## Adding missing grouping variables: `day`, `Year`</code></pre>
+                         fill = &quot;lightblue&quot;, alpha = 3/4) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = &quot;gray90&quot;))</code></pre>
 <p><img src="/post/2020-03-05-nrel-load-shapes_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
-<p>Sometimes you just need to stop and think about what you are actually trying to show.</p>
+<p>Let’s try another way of looking at this…</p>
 <pre class="r"><code>ma_sector_hour %&gt;% 
   summarise(max = max(LoadMW),
             min = min(LoadMW), 
@@ -204,10 +220,12 @@ Same plot, just with different units.</p>
   ggplot() + geom_segment(aes(Year, xend = Year, y = min_hour, yend = max_hour)) + 
   geom_point(aes(Year, max_hour)) +
   geom_point(aes(Year, min_hour)) + 
-  facet_wrap(~month)</code></pre>
-<pre><code>## Adding missing grouping variables: `day`, `Year`
-## Adding missing grouping variables: `day`, `Year`</code></pre>
-<p><img src="/post/2020-03-05-nrel-load-shapes_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+  facet_wrap(~month) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = &quot;gray90&quot;))</code></pre>
+<p><img src="/post/2020-03-05-nrel-load-shapes_files/figure-html/unnamed-chunk-11-1.png" width="672" />
+This is still only so-so but the point is the hours when the max and mins hit don’t change much over the decades</p>
 <pre class="r"><code>ma_sector_hour %&gt;% 
   summarise(max = max(LoadMW),
             min = min(LoadMW), 
@@ -218,15 +236,18 @@ Same plot, just with different units.</p>
   left_join(ma_sector_hour %&gt;% 
               select(hour_day, LoadMW), by = c(&quot;min&quot; = &quot;LoadMW&quot;, &quot;Year&quot;, &quot;day&quot;)) %&gt;% 
   rename(min_hour = hour_day) %&gt;% 
-  ungroup() %&gt;% 
+  group_by(Year) %&gt;% 
   mutate(yday = day + lubridate::as_date(paste0(Year,&quot;-01-01&quot;))-1,
          month = lubridate::month(yday)) %&gt;% 
   # filter(Year == 2018) %&gt;% 
+  ungroup() %&gt;% 
   ggplot() + 
   # geom_point(aes(max, max_hour, color = factor(Year)), alpha = 2/3) + 
-  geom_point(aes(max, max_hour, color = factor(Year)), shape = 21) + #outline
-  facet_wrap(~month)</code></pre>
-<pre><code>## Adding missing grouping variables: `day`, `Year`
-## Adding missing grouping variables: `day`, `Year`</code></pre>
-<p><img src="/post/2020-03-05-nrel-load-shapes_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+  geom_point(aes(max_hour, max, color = factor(Year)), shape = 21) + #outline
+  facet_wrap(~month) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = &quot;gray90&quot;))</code></pre>
+<p><img src="/post/2020-03-05-nrel-load-shapes_files/figure-html/unnamed-chunk-12-1.png" width="672" />
+Not sure why there is so much variation by day in the summer months! Any ideas?</p>
 </div>

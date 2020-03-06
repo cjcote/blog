@@ -160,7 +160,6 @@ characters</code></pre>
 <pre class="r"><code>britishcharacters::episode_search(show_select = &quot;Foyles War&quot;,season_select = 1, episode_select = 1)</code></pre>
 <p><img src="/post/2020-02-18-whodunnit-network-analysis-of-british-mysteries_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
 <p>These charaters seem to be mostly separate from the rest of the shows. Dominic Mafham has been in Midsomer Murders as well, it appears.</p>
-<p>What shows are the</p>
 <p>Of the characters who appear most frequently, what show are they most known for?</p>
 <pre class="r"><code>top_char &lt;- characters %&gt;% 
   count(character, sort = TRUE) %&gt;% 

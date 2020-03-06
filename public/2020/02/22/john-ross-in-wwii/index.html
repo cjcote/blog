@@ -78,7 +78,8 @@
 
 
 <p>My wife’s paternal grandfather took meticulous notes throughout his life, including during his service in the Army during World War II. This Christmas we found and looked through some of those notes, and I figured I could turn then into a fun dataset and map.</p>
-<pre class="r"><code>library(tidyverse)</code></pre>
+<pre class="r"><code>knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+library(tidyverse)</code></pre>
 <p>create point data frame</p>
 <pre class="r"><code>jr_points &lt;- read_csv(&quot;~/Documents/HKS/rtutorial/data/johnross/jr_raw.csv&quot;) %&gt;% 
   mutate(year = str_extract(`Date Arrived`, &quot;-4[0-9]&quot;) %&gt;% str_replace(., &quot;-&quot;, &quot;&quot;),
@@ -236,16 +237,13 @@ ggplot(jr_points) +
   
 }</code></pre>
 <p>use the function!</p>
-<p>This shows where he went during the entire length of his service in the Army, which took him across the US and Italy, with a vacation into Switzerland (not shown).</p>
-<pre class="r"><code>make_map()</code></pre>
-<pre><code>## Warning: Removed 1 rows containing missing values (geom_curve).</code></pre>
-<p><img src="/post/2020-02-22-john-ross-in-wwii_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>These two maps show where he went during the entire length of his service in the Army, which took him across the US and Italy, with a vacation into Switzerland (not shown).</p>
 <p>Service in USA – lots of travel</p>
 <pre class="r"><code>make_map(&quot;USAUSA&quot;)</code></pre>
-<p><img src="/post/2020-02-22-john-ross-in-wwii_files/figure-html/unnamed-chunk-6-1.png" width="864" style="display: block; margin: auto;" /></p>
+<p><img src="/post/2020-02-22-john-ross-in-wwii_files/figure-html/unnamed-chunk-5-1.png" width="864" style="display: block; margin: auto;" /></p>
 <p>Service in Italy. This was harder to map because he continued to pass through the same cities again and again.</p>
 <pre class="r"><code>make_map(&quot;ItalyItaly&quot;)</code></pre>
-<p><img src="/post/2020-02-22-john-ross-in-wwii_files/figure-html/unnamed-chunk-7-1.png" width="864" style="display: block; margin: auto;" /></p>
+<p><img src="/post/2020-02-22-john-ross-in-wwii_files/figure-html/unnamed-chunk-6-1.png" width="864" style="display: block; margin: auto;" /></p>
 <p>I would have liked to use geom_sf with this, but geom_curve was more flexible!</p>
 <p>These aren’t perfect maps, I hope to keep iterating, eventually playing with rasters, improving the arrows, and understanding if there are better methods of adding labels. Though I did think adding the repeat trips inside the same label with paste(collapse) was clever!</p>
 
