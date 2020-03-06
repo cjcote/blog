@@ -1,0 +1,238 @@
+---
+title: NREL Load Shapes
+author: Chris Cote
+date: '2020-03-05'
+slug: nrel-load-shapes
+categories: []
+tags: []
+---
+
+## This post is a quick look at new data from NREL: "Electrification Futures Study Load Profiles" 
+
+The website describes the datasets:
+
+This data set includes hourly load profiles developed for the Electrification Futures Study (EFS). The load profiles represent projected end-use electricity demand for various scenarios of electrification (Reference, Medium, High) and technology advancement (Slow, Moderate, Rapid), developed using the EnergyPATHWAYS (EP) model, as described in Mai et al. (2018). The EP load profiles were further calibrated for use in the ReEDS capacity expansion model (detailed in forthcoming EFS analyses), thus numerical values in this data set differ slightly from those reported in Mai et al. (2018). Load profiles are provided for a subset of years (2018, 2020, 2024, 2030, 2040, 2050) and are aggregated to the state, sector, and select subsector level.
+
+```{r setup}
+library(tidyverse)
+#data dl from https://data.nrel.gov/submissions/126?utm_source=NREL+Electrification+Futures+Study 
+
+#had to unzip with terminal on mac, note on website says:
+#NOTE: Due to the file size, Mac users may experience issues decompressing the zip files using the Mac Archive Utility. In those cases, decompressing using the command line is recommended.
+#just "unzip filename"
+
+efs <- data.table::fread("~/Downloads/EFSLoadProfile_Reference_Moderate.csv")
+```
+
+
+```{r}
+efs %>% as_tibble() %>% 
+  filter(State == "MA") %>% 
+  filter(Sector == "Transportation") %>% 
+  filter(Subsector == "light-duty vehicles") %>% 
+  # filter(Year == 2030) %>% 
+  filter(LocalHourID < 100) %>% 
+  mutate(sector_subsector = paste0(Sector, " ", Subsector)) %>% 
+  ggplot() + geom_line(aes(LocalHourID, LoadMW, color = factor(Year))) +
+  facet_wrap(~sector_subsector)
+```
+
+
+
+```{r}
+annual_growth <- efs %>% as_tibble() %>% 
+  filter(Sector == "Transportation") %>% 
+  filter(Subsector == "light-duty vehicles") %>% 
+  group_by(Year, State) %>% 
+  summarise(LoadMW = sum(LoadMW, na.rm = TRUE)) %>% 
+  group_by(State) %>% 
+  mutate(growth = (LoadMW-lag(LoadMW))/lag(LoadMW)) %>% 
+  ungroup() 
+  
+annual_growth %>% 
+  filter(State %in% c("MA", "NY", "NJ", "TX", "CA", "IL")) %>% 
+  ggplot() + geom_line(aes(Year, growth, color = State)) + 
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = "gray90"))
+```
+
+
+```{r}
+ma_sector <- efs %>% as_tibble() %>% 
+  filter(State == "MA") %>% 
+  group_by(Sector, Year, LocalHourID) %>% 
+  summarise(LoadMW = sum(LoadMW)) %>% 
+  ungroup()
+  
+ma_sector
+```
+```{r}
+ma_sector %>% 
+  group_by(Year, Sector) %>% 
+    mutate(day = rep(1:(length(unique(ma_sector$LocalHourID))/24), each = 24)) %>% 
+  group_by(day, Sector, Year) %>% 
+  summarise(LoadMW = mean(LoadMW)) %>% 
+  ungroup() %>% 
+  ggplot() + geom_line(aes(day, LoadMW, color = factor(Year))) + 
+  facet_wrap(~Sector) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = "gray90"))
+```
+From a high level view, it looks like their estimates have commercial use increasingly significant in 2050 while the residential load stays put. Transportation in MA doesn't grow to significant levels, meaning EVs (in this moderate reference case), never really have a big impact. Industrial is steady.
+
+What's driving commercial use? 
+
+```{r}
+efs %>% 
+  as_tibble() %>% 
+  filter(State == "MA", 
+         Sector == "Commercial") %>% 
+  group_by(Year, Subsector) %>% 
+  summarise(LoadMW = mean(LoadMW)) %>% 
+  ungroup() %>% 
+  ggplot() + geom_col(aes(Subsector, LoadMW, fill = factor(Year)), position = "dodge") +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = "gray90"))
+```
+
+How helpful... an enormous jump in "other" in 2050. Maybe the EnergyPathways docs say more. For another day. 
+
+
+Does the variability of demand in MA change over time? I suppose there are several ways to measure this, but I'll take the daily range (max - min). Can we see anything in a daily plot?
+
+```{r}
+ma_sector_hour <- ma_sector %>%
+  group_by(Year, LocalHourID) %>% 
+  summarise(LoadMW = sum(LoadMW)) %>% 
+  group_by(Year) %>% 
+  mutate(day = rep(1:(length(unique(ma_sector$LocalHourID))/24), each = 24)) %>% 
+  group_by(day, Year) %>% 
+  mutate(hour_day = 1:n()) 
+  
+ma_sector_hour %>% 
+  summarise(max = max(LoadMW),
+            min = min(LoadMW), 
+            daily_range = (max - min)) %>% 
+  ungroup() %>% 
+  ggplot() + geom_line(aes(day, daily_range, color = factor(Year)))
+  
+  
+```
+
+Not much! 
+
+Let's try it in an annual plot
+
+```{r}
+ma_sector_hour %>% 
+  summarise(max = max(LoadMW),
+            min = min(LoadMW), 
+            daily_range = (max - min)) %>% 
+  group_by(Year) %>% 
+  summarise(daily_range = mean(daily_range)) %>% #this part changes
+  ggplot() + geom_col(aes(Year, daily_range, fill = factor(Year)))
+```
+
+Or since what we're really trying to do here is find the standard deviation, let's just check that per day
+```{r}
+ma_sector_hour %>% 
+  summarise(sd = sd(LoadMW)) %>% 
+  group_by(Year) %>% 
+  summarise(sd = mean(sd)) %>% #this part changes
+  ggplot() + geom_col(aes(Year, sd, fill = factor(Year)))
+```
+Same plot, just with different units.
+
+
+
+Do the load peaks and nadirs the same over time? 
+```{r}
+ma_sector_hour %>% 
+  summarise(max = max(LoadMW),
+            min = min(LoadMW), 
+            daily_range = (max - min)) %>% 
+  left_join(ma_sector_hour %>% 
+              select(hour_day, LoadMW), by = c("max" = "LoadMW", "Year", "day")) %>% 
+  rename(max_hour = hour_day) %>% 
+  left_join(ma_sector_hour %>% 
+              select(hour_day, LoadMW), by = c("min" = "LoadMW", "Year", "day")) %>% 
+  rename(min_hour = hour_day) %>% 
+  ungroup() %>% 
+  ggplot() + geom_ribbon(aes(day, ymin = min_hour, ymax = max_hour), 
+                         fill = "lightblue", alpha = 3/4) + 
+  facet_wrap(~Year)
+
+```
+
+Ok this is pretty unhelpful. We can see how the load shape changes over the year, but it's pretty difficult to see whether there's any variation across years.
+
+Let's look at just one year, since we're here.
+
+```{r}
+ma_sector_hour %>% 
+  summarise(max = max(LoadMW),
+            min = min(LoadMW), 
+            daily_range = (max - min)) %>% 
+  left_join(ma_sector_hour %>% 
+              select(hour_day, LoadMW), by = c("max" = "LoadMW", "Year", "day")) %>% 
+  rename(max_hour = hour_day) %>% 
+  left_join(ma_sector_hour %>% 
+              select(hour_day, LoadMW), by = c("min" = "LoadMW", "Year", "day")) %>% 
+  rename(min_hour = hour_day) %>% 
+  ungroup() %>% 
+  filter(Year == 2018) %>% 
+  ggplot() + geom_ribbon(aes(day, ymin = min_hour, ymax = max_hour), 
+                         fill = "lightblue", alpha = 3/4)
+```
+
+
+Sometimes you just need to stop and think about what you are actually trying to show. 
+```{r}
+ma_sector_hour %>% 
+  summarise(max = max(LoadMW),
+            min = min(LoadMW), 
+            daily_range = (max - min)) %>% 
+  left_join(ma_sector_hour %>% 
+              select(hour_day, LoadMW), by = c("max" = "LoadMW", "Year", "day")) %>% 
+  rename(max_hour = hour_day) %>% 
+  left_join(ma_sector_hour %>% 
+              select(hour_day, LoadMW), by = c("min" = "LoadMW", "Year", "day")) %>% 
+  rename(min_hour = hour_day) %>% 
+  ungroup() %>% 
+  mutate(yday = day + lubridate::as_date(paste0(Year,"-01-01"))-1,
+         month = lubridate::month(yday)) %>% 
+  group_by(Year, month) %>% 
+  summarise(max_hour = mean(max_hour),
+            min_hour = mean(min_hour)) %>% 
+  ungroup() %>% 
+  ggplot() + geom_segment(aes(Year, xend = Year, y = min_hour, yend = max_hour)) + 
+  geom_point(aes(Year, max_hour)) +
+  geom_point(aes(Year, min_hour)) + 
+  facet_wrap(~month)
+```
+
+
+```{r}
+ma_sector_hour %>% 
+  summarise(max = max(LoadMW),
+            min = min(LoadMW), 
+            daily_range = (max - min)) %>% 
+  left_join(ma_sector_hour %>% 
+              select(hour_day, LoadMW), by = c("max" = "LoadMW", "Year", "day")) %>% 
+  rename(max_hour = hour_day) %>% 
+  left_join(ma_sector_hour %>% 
+              select(hour_day, LoadMW), by = c("min" = "LoadMW", "Year", "day")) %>% 
+  rename(min_hour = hour_day) %>% 
+  ungroup() %>% 
+  mutate(yday = day + lubridate::as_date(paste0(Year,"-01-01"))-1,
+         month = lubridate::month(yday)) %>% 
+  # filter(Year == 2018) %>% 
+  ggplot() + 
+  # geom_point(aes(max, max_hour, color = factor(Year)), alpha = 2/3) + 
+  geom_point(aes(max, max_hour, color = factor(Year)), shape = 21) + #outline
+  facet_wrap(~month)
+```
+

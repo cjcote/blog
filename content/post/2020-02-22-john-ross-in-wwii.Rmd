@@ -1,5 +1,5 @@
 ---
-title: "John Ross in WWII"
+title: "Grandpa in Law in WWII"
 author: "Chris Cote"
 date: '2020-02-22'
 output:
@@ -10,6 +10,7 @@ slug: john-ross-in-wwii
 tags: []
 categories: spatial
 ---
+My wife's paternal grandfather took meticulous notes throughout his life, including during his service in the Army during World War II. This Christmas we found and looked through some of those notes, and I figured I could turn then into a fun dataset and map.
 
 ```{r setup, message=FALSE, warning=FALSE}
 library(tidyverse)
@@ -162,12 +163,13 @@ ggplot(jr_points) +
 
 use the function!
 
+This shows where he went during the entire length of his service in the Army, which took him across the US and Italy, with a vacation into Switzerland (not shown).
 ```{r}
 make_map()
 
 ```
 
-Service in USA 
+Service in USA  -- lots of travel
 ```{r fig.align="center", fig.height=6, fig.width=9, message=FALSE, warning=FALSE}
 
 make_map("USAUSA")
@@ -175,7 +177,7 @@ make_map("USAUSA")
 ```
 
 
-Service in Italy
+Service in Italy. This was harder to map because he continued to pass through the same cities again and again. 
 
 ```{r fig.align="center", fig.height=6, fig.width=9, message=FALSE, warning=FALSE}
 
@@ -183,4 +185,6 @@ make_map("ItalyItaly")
 
 ```
 
+I would have liked to use geom_sf with this, but geom_curve was more flexible! 
 
+These aren't perfect maps, I hope to keep iterating, eventually playing with rasters, improving the arrows, and understanding if there are better methods of adding labels. Though I did think adding the repeat trips inside the same label with paste(collapse) was clever!

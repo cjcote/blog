@@ -12,13 +12,14 @@
     
     
     <item>
-      <title>John Ross in WWII</title>
+      <title>Grandpa in Law in WWII</title>
       <link>/2020/02/22/john-ross-in-wwii/</link>
       <pubDate>Sat, 22 Feb 2020 00:00:00 +0000</pubDate>
       
       <guid>/2020/02/22/john-ross-in-wwii/</guid>
-      <description>library(tidyverse) create point data frame
-jr_points &amp;lt;- read_csv(&amp;quot;~/Documents/HKS/rtutorial/data/johnross/jr_raw.csv&amp;quot;) %&amp;gt;% mutate(year = str_extract(`Date Arrived`, &amp;quot;-4[0-9]&amp;quot;) %&amp;gt;% str_replace(., &amp;quot;-&amp;quot;, &amp;quot;&amp;quot;), month = str_extract(`Date Arrived`, &amp;quot;[A-Z][a-z][a-z]&amp;quot;) %&amp;gt;% str_replace_all(., &amp;quot;-&amp;quot;, &amp;quot;&amp;quot;), day = str_extract(`Date Arrived`, &amp;quot;^[0-9]([0-9])?&amp;quot;), year = ifelse(is.na(year), lag(year), year), date = paste0(&amp;quot;19&amp;quot;,year,&amp;quot;-&amp;quot;, month,&amp;quot;-&amp;quot;, day) %&amp;gt;% as.Date(&amp;quot;%Y-%b-%d&amp;quot;)) %&amp;gt;% filter(!is.na(Lat)) %&amp;gt;% select(date, year, month, day, everything()) %&amp;gt;% mutate(index = 1:n()) %&amp;gt;% set_names(str_replace(str_to_lower(names(.)), &amp;quot; &amp;quot;, &amp;quot;_&amp;quot;)) %&amp;gt;% mutate(date_arrived = as.Date(paste0(&amp;quot;19&amp;quot;, year, &amp;quot;-&amp;quot;, month, &amp;quot;-&amp;quot;, day), format = &amp;quot;%Y-%b-%d&amp;quot;)) %&amp;gt;% arrange(date_arrived) %&amp;gt;% mutate(date_left = lead(date_arrived)) %&amp;gt;% mutate(location = paste(location_1, location_2, location_3, sep = &amp;quot;, &amp;quot;)) %&amp;gt;% select(date_arrived, date_left, location, what, lat, lon) %&amp;gt;% mutate(new_location = ifelse(location == lag(location), 0 , 1), new_location = ifelse(row_number() == 1, 0, new_location), new_location = cumsum(new_location)) %&amp;gt;% group_by(new_location) %&amp;gt;% fill(what) %&amp;gt;% ungroup() %&amp;gt;% distinct(new_location, .</description>
+      <description>My wife’s paternal grandfather took meticulous notes throughout his life, including during his service in the Army during World War II. This Christmas we found and looked through some of those notes, and I figured I could turn then into a fun dataset and map.
+library(tidyverse) create point data frame
+jr_points &amp;lt;- read_csv(&amp;quot;~/Documents/HKS/rtutorial/data/johnross/jr_raw.csv&amp;quot;) %&amp;gt;% mutate(year = str_extract(`Date Arrived`, &amp;quot;-4[0-9]&amp;quot;) %&amp;gt;% str_replace(., &amp;quot;-&amp;quot;, &amp;quot;&amp;quot;), month = str_extract(`Date Arrived`, &amp;quot;[A-Z][a-z][a-z]&amp;quot;) %&amp;gt;% str_replace_all(.</description>
     </item>
     
   </channel>
