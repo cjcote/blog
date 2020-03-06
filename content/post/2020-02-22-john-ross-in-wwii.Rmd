@@ -13,6 +13,7 @@ categories: spatial
 My wife's paternal grandfather took meticulous notes throughout his life, including during his service in the Army during World War II. This Christmas we found and looked through some of those notes, and I figured I could turn then into a fun dataset and map.
 
 ```{r setup, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 library(tidyverse)
 
 ```
@@ -163,11 +164,8 @@ ggplot(jr_points) +
 
 use the function!
 
-This shows where he went during the entire length of his service in the Army, which took him across the US and Italy, with a vacation into Switzerland (not shown).
-```{r}
-make_map()
+These two maps show where he went during the entire length of his service in the Army, which took him across the US and Italy, with a vacation into Switzerland (not shown).
 
-```
 
 Service in USA  -- lots of travel
 ```{r fig.align="center", fig.height=6, fig.width=9, message=FALSE, warning=FALSE}

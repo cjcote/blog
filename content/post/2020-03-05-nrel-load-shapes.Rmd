@@ -14,6 +14,7 @@ The website describes the datasets:
 This data set includes hourly load profiles developed for the Electrification Futures Study (EFS). The load profiles represent projected end-use electricity demand for various scenarios of electrification (Reference, Medium, High) and technology advancement (Slow, Moderate, Rapid), developed using the EnergyPATHWAYS (EP) model, as described in Mai et al. (2018). The EP load profiles were further calibrated for use in the ReEDS capacity expansion model (detailed in forthcoming EFS analyses), thus numerical values in this data set differ slightly from those reported in Mai et al. (2018). Load profiles are provided for a subset of years (2018, 2020, 2024, 2030, 2040, 2050) and are aggregated to the state, sector, and select subsector level.
 
 ```{r setup}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 library(tidyverse)
 #data dl from https://data.nrel.gov/submissions/126?utm_source=NREL+Electrification+Futures+Study 
 
@@ -24,7 +25,7 @@ library(tidyverse)
 efs <- data.table::fread("~/Downloads/EFSLoadProfile_Reference_Moderate.csv")
 ```
 
-
+How does demand for electric-charging vehicles change by decade over the first 100 hours of each year... (not so helpful but fun looking)
 ```{r}
 efs %>% as_tibble() %>% 
   filter(State == "MA") %>% 
@@ -34,7 +35,10 @@ efs %>% as_tibble() %>%
   filter(LocalHourID < 100) %>% 
   mutate(sector_subsector = paste0(Sector, " ", Subsector)) %>% 
   ggplot() + geom_line(aes(LocalHourID, LoadMW, color = factor(Year))) +
-  facet_wrap(~sector_subsector)
+  facet_wrap(~sector_subsector) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = "gray90"))
 ```
 
 
@@ -67,6 +71,8 @@ ma_sector <- efs %>% as_tibble() %>%
   
 ma_sector
 ```
+
+The commercial sector has the largest seasonal peak and uses the most electricity overall.
 ```{r}
 ma_sector %>% 
   group_by(Year, Sector) %>% 
@@ -117,12 +123,15 @@ ma_sector_hour %>%
             min = min(LoadMW), 
             daily_range = (max - min)) %>% 
   ungroup() %>% 
-  ggplot() + geom_line(aes(day, daily_range, color = factor(Year)))
+  ggplot() + geom_line(aes(day, daily_range, color = factor(Year))) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = "gray90"))
   
   
 ```
 
-Not much! 
+Not much variation to see from this point of view! 
 
 Let's try it in an annual plot
 
@@ -133,7 +142,10 @@ ma_sector_hour %>%
             daily_range = (max - min)) %>% 
   group_by(Year) %>% 
   summarise(daily_range = mean(daily_range)) %>% #this part changes
-  ggplot() + geom_col(aes(Year, daily_range, fill = factor(Year)))
+  ggplot() + geom_col(aes(Year, daily_range, fill = factor(Year))) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = "gray90"))
 ```
 
 Or since what we're really trying to do here is find the standard deviation, let's just check that per day
@@ -142,13 +154,15 @@ ma_sector_hour %>%
   summarise(sd = sd(LoadMW)) %>% 
   group_by(Year) %>% 
   summarise(sd = mean(sd)) %>% #this part changes
-  ggplot() + geom_col(aes(Year, sd, fill = factor(Year)))
+  ggplot() + geom_col(aes(Year, sd, fill = factor(Year))) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = "gray90"))
 ```
 Same plot, just with different units.
 
 
-
-Do the load peaks and nadirs the same over time? 
+Do the load peaks and nadirs stay the same over time? 
 ```{r}
 ma_sector_hour %>% 
   summarise(max = max(LoadMW),
@@ -163,7 +177,10 @@ ma_sector_hour %>%
   ungroup() %>% 
   ggplot() + geom_ribbon(aes(day, ymin = min_hour, ymax = max_hour), 
                          fill = "lightblue", alpha = 3/4) + 
-  facet_wrap(~Year)
+  facet_wrap(~Year) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = "gray90"))
 
 ```
 
@@ -185,11 +202,14 @@ ma_sector_hour %>%
   ungroup() %>% 
   filter(Year == 2018) %>% 
   ggplot() + geom_ribbon(aes(day, ymin = min_hour, ymax = max_hour), 
-                         fill = "lightblue", alpha = 3/4)
+                         fill = "lightblue", alpha = 3/4) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = "gray90"))
 ```
 
 
-Sometimes you just need to stop and think about what you are actually trying to show. 
+Let's try another way of looking at this...
 ```{r}
 ma_sector_hour %>% 
   summarise(max = max(LoadMW),
@@ -211,8 +231,14 @@ ma_sector_hour %>%
   ggplot() + geom_segment(aes(Year, xend = Year, y = min_hour, yend = max_hour)) + 
   geom_point(aes(Year, max_hour)) +
   geom_point(aes(Year, min_hour)) + 
-  facet_wrap(~month)
+  facet_wrap(~month) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = "gray90"))
 ```
+This is still only so-so but the point is the hours when the max and mins hit don't change much over the decades
+
+
 
 
 ```{r}
@@ -226,13 +252,17 @@ ma_sector_hour %>%
   left_join(ma_sector_hour %>% 
               select(hour_day, LoadMW), by = c("min" = "LoadMW", "Year", "day")) %>% 
   rename(min_hour = hour_day) %>% 
-  ungroup() %>% 
+  group_by(Year) %>% 
   mutate(yday = day + lubridate::as_date(paste0(Year,"-01-01"))-1,
          month = lubridate::month(yday)) %>% 
   # filter(Year == 2018) %>% 
+  ungroup() %>% 
   ggplot() + 
   # geom_point(aes(max, max_hour, color = factor(Year)), alpha = 2/3) + 
-  geom_point(aes(max, max_hour, color = factor(Year)), shape = 21) + #outline
-  facet_wrap(~month)
+  geom_point(aes(max_hour, max, color = factor(Year)), shape = 21) + #outline
+  facet_wrap(~month) +
+  theme(plot.background = element_blank(),
+        panel.background = element_blank(),
+        panel.grid = element_line(color = "gray90"))
 ```
-
+Not sure why there is so much variation by day in the summer months! Any ideas? 

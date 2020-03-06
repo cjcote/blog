@@ -60,13 +60,6 @@ These charaters seem to be mostly separate from the rest of the shows. Dominic M
 
 
 
-
-
-
-
-
-What shows are the 
-
 Of the characters who appear most frequently, what show are they most known for?
 ```{r}
 
