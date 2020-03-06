@@ -105,7 +105,11 @@ tt %>%
 
 ### How frequently is David Sedaris on TAL?
 
+
+![](/post/2020-02-14-this-american-r-blog_files/sedaris.png)
 Frequent listerns know that David Sedaris is a frequent guest on This American Life. The question is: how frequent? Sometimes it feels like he's on every 10 episodes. Is this true?
+
+
 
 The chart below shows time between each episode that features David Sedaris.
 
