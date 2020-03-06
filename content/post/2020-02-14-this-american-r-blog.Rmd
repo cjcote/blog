@@ -11,7 +11,7 @@ I love This American Life. I thought it would be a fun corpus to look at and do 
 
 ## Setup
 Load tidyverse, set theme, read in local file...
-```{r setup, message = FALSE, warning = FALSE, echo = TRUE}
+```{r setup, message = FALSE, warning = FALSE, echo = TRUE, cache = TRUE}
 library(tidyverse)
 
 theme_cc <- theme(panel.grid = element_line(color = "gray90"),
@@ -39,7 +39,7 @@ Let's create a file that gives us the tf_idf of the whole corpus.
 
 Read more in the fantastic [Tidy Text Mining] book (https://www.tidytextmining.com/tfidf.html)
 
-[(oops! ... )](https://juliasilge.com/blog/introducing-tidylo/)
+[(oops! ... maybe there is a better way to do this, thanks Julia Silge)](https://juliasilge.com/blog/introducing-tidylo/)
 ```{r, message = FALSE, warning = FALSE, echo = TRUE}
 tal_tf_idf <- tal_tidy  %>% 
   select(title, word) %>% 
@@ -50,7 +50,7 @@ tal_tf_idf <- tal_tidy  %>%
   
 ```
 
-Using the tf idf dataset, let's look at the most important words in the first 50 episodes ever. 
+Using the `tf_idf dataset`, let's look at the most important words in the first 50 episodes ever. 
 ```{r fig.height=20, fig.width = 6.5, message = FALSE, warning = FALSE, echo = TRUE}
 tal_tf_idf %>% 
   group_by(title) %>% 
