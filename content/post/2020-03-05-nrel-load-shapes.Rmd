@@ -14,7 +14,7 @@ The website describes the datasets:
 This data set includes hourly load profiles developed for the Electrification Futures Study (EFS). The load profiles represent projected end-use electricity demand for various scenarios of electrification (Reference, Medium, High) and technology advancement (Slow, Moderate, Rapid), developed using the EnergyPATHWAYS (EP) model, as described in Mai et al. (2018). The EP load profiles were further calibrated for use in the ReEDS capacity expansion model (detailed in forthcoming EFS analyses), thus numerical values in this data set differ slightly from those reported in Mai et al. (2018). Load profiles are provided for a subset of years (2018, 2020, 2024, 2030, 2040, 2050) and are aggregated to the state, sector, and select subsector level.
 
 ```{r setup}
-knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 library(tidyverse)
 #data dl from https://data.nrel.gov/submissions/126?utm_source=NREL+Electrification+Futures+Study 
 
@@ -22,6 +22,9 @@ library(tidyverse)
 #NOTE: Due to the file size, Mac users may experience issues decompressing the zip files using the Mac Archive Utility. In those cases, decompressing using the command line is recommended.
 #just "unzip filename"
 
+```
+
+```{r message=FALSE, warning=FALSE}
 efs <- data.table::fread("~/Downloads/EFSLoadProfile_Reference_Moderate.csv")
 ```
 

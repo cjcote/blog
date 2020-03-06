@@ -12,7 +12,6 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 library(tidyverse)
 library(tidygraph)
 library(ggraph)
-
 library(britishcharacters) #remotes::install_github("cjcote/britishcharacters)
 ```
 
@@ -30,13 +29,15 @@ map_episode_color <- function (show_selected, season_selected, episode_selected)
 }
 ```
 
+```{r message=FALSE, warning=FALSE, cache=TRUE}
+characters <- read_csv("https://raw.githubusercontent.com/cjcote/blog/master/public/characters.csv")
+```
+
 
 ```{r}
-characters <- read_csv("https://raw.githubusercontent.com/cjcote/blog/master/public/characters.csv")
-
-#or load from package {britishcharacters} characters <- britishcharacters::characters
 
 characters
+#or load from package {britishcharacters} characters <- britishcharacters::characters
 ```
 
 What shows are in the dataset?
