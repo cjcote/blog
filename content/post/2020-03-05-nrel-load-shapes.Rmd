@@ -266,6 +266,8 @@ ma_sector_hour %>%
   facet_wrap(~month) +
   theme(plot.background = element_blank(),
         panel.background = element_blank(),
-        panel.grid = element_line(color = "gray90"))
+        panel.grid = element_line(color = "gray90"),
+        axis.text.x  = element_text(angle = 90))
 ```
+
 Not sure why there is so much variation by day in the summer months! Any ideas? 

@@ -126,14 +126,14 @@ tal %>% filter(str_detect(content, regex("sedaris",ignore_case = TRUE))) %>%   t
   ungroup() %>% 
   arrange(air_date) %>% 
   mutate(time_between = as.numeric(air_date - lag(air_date))) %>% 
-  ggplot(aes(show_number, time_between)) +
+  ggplot(aes(show_number, time_between/7)) +
   geom_point() +
   geom_line() +
   theme_cc +
-  labs(title = "Where's David?", x = "Show Number", y = "Days since Last Sedaris Appearance")
+  labs(title = "Where's David?", x = "Show Number", y = "Weeks since Last Sedaris Appearance") 
 ```
 
-
+Seems like it was true for the first 
 ```{r, fig.align = "center", fig.width = 8, fig.height = 8}
 tal %>% filter(str_detect(content, regex("sedaris",ignore_case = TRUE))) %>%    
   tidytext::unnest_tokens("word", content) %>% 

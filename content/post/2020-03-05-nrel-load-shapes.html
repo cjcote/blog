@@ -16,7 +16,7 @@ tags: []
 <pre class="r"><code>knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 library(tidyverse)</code></pre>
 <pre><code>## Warning: package &#39;tidyverse&#39; was built under R version 3.5.2</code></pre>
-<pre><code>## ── Attaching packages ────────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
+<pre><code>## ── Attaching packages ──────────────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
 <pre><code>## ✓ ggplot2 3.2.1     ✓ purrr   0.3.3
 ## ✓ tibble  2.1.3     ✓ dplyr   0.8.4
 ## ✓ tidyr   1.0.2     ✓ stringr 1.4.0
@@ -28,7 +28,7 @@ library(tidyverse)</code></pre>
 <pre><code>## Warning: package &#39;dplyr&#39; was built under R version 3.5.2</code></pre>
 <pre><code>## Warning: package &#39;stringr&#39; was built under R version 3.5.2</code></pre>
 <pre><code>## Warning: package &#39;forcats&#39; was built under R version 3.5.2</code></pre>
-<pre><code>## ── Conflicts ───────────────────────────────────────────── tidyverse_conflicts() ──
+<pre><code>## ── Conflicts ─────────────────────────────────────────────────── tidyverse_conflicts() ──
 ## x dplyr::filter() masks stats::filter()
 ## x dplyr::lag()    masks stats::lag()</code></pre>
 <pre class="r"><code>#data dl from https://data.nrel.gov/submissions/126?utm_source=NREL+Electrification+Futures+Study 
@@ -246,7 +246,8 @@ This is still only so-so but the point is the hours when the max and mins hit do
   facet_wrap(~month) +
   theme(plot.background = element_blank(),
         panel.background = element_blank(),
-        panel.grid = element_line(color = &quot;gray90&quot;))</code></pre>
-<p><img src="/post/2020-03-05-nrel-load-shapes_files/figure-html/unnamed-chunk-13-1.png" width="672" />
-Not sure why there is so much variation by day in the summer months! Any ideas?</p>
+        panel.grid = element_line(color = &quot;gray90&quot;),
+        axis.text.x  = element_text(angle = 90))</code></pre>
+<p><img src="/post/2020-03-05-nrel-load-shapes_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>Not sure why there is so much variation by day in the summer months! Any ideas?</p>
 </div>

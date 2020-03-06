@@ -101,12 +101,13 @@ tt %&gt;%
   ungroup() %&gt;% 
   arrange(air_date) %&gt;% 
   mutate(time_between = as.numeric(air_date - lag(air_date))) %&gt;% 
-  ggplot(aes(show_number, time_between)) +
+  ggplot(aes(show_number, time_between/7)) +
   geom_point() +
   geom_line() +
   theme_cc +
-  labs(title = &quot;Where&#39;s David?&quot;, x = &quot;Show Number&quot;, y = &quot;Days since Last Sedaris Appearance&quot;)</code></pre>
+  labs(title = &quot;Where&#39;s David?&quot;, x = &quot;Show Number&quot;, y = &quot;Weeks since Last Sedaris Appearance&quot;) </code></pre>
 <p><img src="/post/2020-02-14-this-american-r-blog_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Seems like it was true for the first</p>
 <pre class="r"><code>tal %&gt;% filter(str_detect(content, regex(&quot;sedaris&quot;,ignore_case = TRUE))) %&gt;%    
   tidytext::unnest_tokens(&quot;word&quot;, content) %&gt;% 
   filter(show_number &lt; 50) %&gt;% 
